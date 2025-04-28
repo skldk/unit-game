@@ -38,6 +38,75 @@ const ACHIEVEMENTS: Record<string, { label: string; color: string; bg: string; i
   },
 };
 
+// --- Расширенные ачивки ---
+const ACHIEVEMENTS_EXT: {
+  key: string;
+  label: string;
+  desc: string;
+  check: (params: { metrics: Metrics; history: Metrics[]; riskFails: number; abTests: number; partnerships: number; viralityClients: number; supportUpgrades: number; opexLowStreak: number; }) => boolean;
+}[] = [
+  {
+    key: 'cacczar',
+    label: 'Царь CAC',
+    desc: 'Снизить CAC до $25 и держать 3 хода подряд.',
+    check: ({ history }) => history.slice(-3).every(m => m.CAC <= 25),
+  },
+  {
+    key: 'ltvlegend',
+    label: 'LTV-легенда',
+    desc: 'LTV ≥ $200, Retention ≥ 80%, NPS ≥ 70.',
+    check: ({ metrics }) => metrics.LTV >= 200 && metrics.Retention >= 80 && metrics.NPS >= 70,
+  },
+  {
+    key: 'viralvirus',
+    label: 'Виральный вирус',
+    desc: 'Привлечь 500 клиентов через Virality.',
+    check: ({ viralityClients }) => viralityClients >= 500,
+  },
+  {
+    key: 'retuniverse',
+    label: 'Удержатель вселенной',
+    desc: 'Retention ≥ 90% после 5 улучшений продукта.',
+    check: ({ metrics, supportUpgrades }) => metrics.Retention >= 90 && supportUpgrades >= 5,
+  },
+  {
+    key: 'riskmaster',
+    label: 'Мастер рисков',
+    desc: 'Выиграть после 3 негативных событий.',
+    check: ({ riskFails, metrics }) => riskFails >= 3 && metrics.Profit >= WIN_PROFIT,
+  },
+  {
+    key: 'optimizer',
+    label: 'Оптимизатор',
+    desc: '10 успешных A/B тестов (инициативы с приростом Conversion).',
+    check: ({ abTests }) => abTests >= 10,
+  },
+  {
+    key: 'networker',
+    label: 'Нетворкер',
+    desc: '5 партнерств.',
+    check: ({ partnerships }) => partnerships >= 5,
+  },
+  {
+    key: 'crisismanager',
+    label: 'Кризис-менеджер',
+    desc: 'Пережить 2 экономических кризиса (негативные риски).',
+    check: ({ riskFails }) => riskFails >= 2,
+  },
+  {
+    key: 'supportninja',
+    label: 'Ниндзя поддержки',
+    desc: 'NPS ≥ 85 после 3 улучшений поддержки.',
+    check: ({ metrics, supportUpgrades }) => metrics.NPS >= 85 && supportUpgrades >= 3,
+  },
+  {
+    key: 'financemaster',
+    label: 'Финансовый гуру',
+    desc: 'OpEx ≤ $100 в течение 4 ходов.',
+    check: ({ history }) => history.slice(-4).every(m => m.OpEx <= 100),
+  },
+];
+
 // График выхода на окупаемость
 function BreakEvenChart({ cac, ltv, fixed, users }: { cac: number; ltv: number; fixed: number; users: number }) {
   // Моделируем 24 месяца
@@ -225,6 +294,10 @@ function getRandomInitMetrics() {
     Budget: Math.round(800 + Math.random() * 400), // 800-1200
     Fixed: 200,
     Profit: 0,
+    NPS: Math.round(40 + Math.random() * 20), // 40-60
+    Virality: 0.1 + Math.random() * 0.2, // 0.1-0.3
+    Traffic: Math.round(100 + Math.random() * 50), // 100-150
+    OpEx: 200 + Math.round(Math.random() * 100), // 200-300
   };
 }
 const INIT_METRICS = getRandomInitMetrics();
@@ -236,51 +309,276 @@ const INITIATIVES: {
   description: string;
   apply: (m: Metrics) => Partial<Metrics>;
   feedback: string;
-  risk?: { chance: number; effect: (m: Metrics) => Partial<Metrics>; message: string };
+  risk?: { chance: number; effect: (m: Metrics) => Partial<Metrics>; message: string; condition?: (m: Metrics) => boolean };
 }[] = [
+  // Маркетинг
+  {
+    icon: '🔎',
+    title: 'Контекстная реклама в Google Ads',
+    description: 'CAC -$10, Конверсия +2%. Риск: При NPS < 50 → CAC +$15 (пользователи жалуются на навязчивость).',
+    apply: m => ({ CAC: Math.max(m.CAC - 10, 0), Conversion: Math.min(m.Conversion + 2, 100) }),
+    feedback: 'Реклама привела новых клиентов, но есть риск негатива.',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ CAC: m.CAC + 15 }),
+      message: 'Пользователи жалуются на навязчивую рекламу — CAC вырос!',
+      condition: m => m.NPS < 50
+    }
+  },
+  {
+    icon: '📢',
+    title: 'Таргетированная рассылка в соцсетях',
+    description: 'Конверсия +3%, Virality +0.1. Риск: При Retention < 50% → NPS -7.',
+    apply: m => ({ Conversion: Math.min(m.Conversion + 3, 100), Virality: m.Virality + 0.1 }),
+    feedback: 'Рассылка сработала, но есть риск негатива.',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ NPS: m.NPS - 7 }),
+      message: 'Пользователи считают рассылку спамом — NPS снизился!',
+      condition: m => m.Retention < 50
+    }
+  },
+  {
+    icon: '🤝',
+    title: 'Коллаборация с микроблогером',
+    description: 'Трафик +20%, LTV +$10. Риск: Если блогер теряет популярность → Трафик -30%.',
+    apply: m => ({ Traffic: m.Traffic + 20, LTV: m.LTV + 10 }),
+    feedback: 'Блогер привёл новую аудиторию!',
+    risk: {
+      chance: 0.15,
+      effect: m => ({ Traffic: Math.max(m.Traffic - 30, 0) }),
+      message: 'Блогер потерял популярность — трафик упал!',
+      condition: m => true
+    }
+  },
+  // Продукт
+  {
+    icon: '✨',
+    title: 'Добавление новой функции',
+    description: 'Retention +8%, LTV +$15. Риск: 25% шанс, что функция багнутая → NPS -10, OpEx +$100.',
+    apply: m => ({ Retention: Math.min(m.Retention + 8, 100), LTV: m.LTV + 15 }),
+    feedback: 'Новая функция понравилась клиентам!',
+    risk: {
+      chance: 0.25,
+      effect: m => ({ NPS: m.NPS - 10, OpEx: m.OpEx + 100 }),
+      message: 'Функция оказалась с багами — NPS и OpEx пострадали.',
+      condition: m => true
+    }
+  },
   {
     icon: '🚀',
-    title: 'Улучшение продукта',
-    description: 'Увеличивает Retention Rate на 10%, снижает LTV на $20.',
-    apply: (m: Metrics) => ({ Retention: Math.min(m.Retention + 10, 100), LTV: Math.max(m.LTV - 20, 0) }),
-    feedback: 'Вы вложились в продукт — удержание выросло, но LTV снизился из-за затрат.'
+    title: 'Упрощение onboarding',
+    description: 'Конверсия +5%, Retention +5%. Риск: При частых изменениях → NPS -5.',
+    apply: m => ({ Conversion: Math.min(m.Conversion + 5, 100), Retention: Math.min(m.Retention + 5, 100) }),
+    feedback: 'Onboarding стал проще!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ NPS: m.NPS - 5 }),
+      message: 'Клиенты теряются из-за частых изменений — NPS снизился.',
+      condition: m => true
+    }
   },
   {
-    icon: '📣',
-    title: 'Маркетинговая кампания',
-    description: 'Снижает CAC на $10, увеличивает конверсию на 2%. Риск: 30% шанс, что CAC вырастет на $15.',
-    apply: (m: Metrics) => ({ CAC: Math.max(m.CAC - 10, 0), Conversion: Math.min(m.Conversion + 2, 100) }),
-    risk: { chance: 0.3, effect: (m: Metrics) => ({ CAC: m.CAC + 15 }), message: 'Маркетинговая кампания провалилась — CAC вырос на $15.' },
-    feedback: 'Маркетинг сработал, но был риск!'
+    icon: '💳',
+    title: 'Ввод платной подписки',
+    description: 'LTV +$25, Конверсия -3%. Риск: Если LTV > $150 → Конверсия +2%.',
+    apply: m => ({ LTV: m.LTV + 25, Conversion: Math.max(m.Conversion - 3, 0) }),
+    feedback: 'Платная подписка увеличила LTV, но часть клиентов ушла.',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ Conversion: m.Conversion + 2 }),
+      message: 'Премиум-статус привлёк новых клиентов!',
+      condition: m => m.LTV > 150
+    }
+  },
+  // Поддержка клиентов
+  {
+    icon: '💬',
+    title: 'Круглосуточный чат с поддержкой',
+    description: 'NPS +10, Retention +7%. Риск: OpEx +$120/мес.',
+    apply: m => ({ NPS: m.NPS + 10, Retention: Math.min(m.Retention + 7, 100) }),
+    feedback: 'Поддержка стала лучше, клиенты довольны!',
+    risk: {
+      effect: m => ({ OpEx: m.OpEx + 120 }),
+      message: 'Затраты на поддержку выросли (OpEx)!',
+      chance: 1,
+      condition: m => true
+    }
   },
   {
-    icon: '🎁',
-    title: 'Программа лояльности',
-    description: 'Повышает LTV на $30, снижает Retention Rate на 5%.',
-    apply: (m: Metrics) => ({ LTV: m.LTV + 30, Retention: Math.max(m.Retention - 5, 0) }),
-    feedback: 'LTV вырос, но удержание снизилось из-за сложности программы.'
+    icon: '🤖',
+    title: 'Внедрение AI-помощника',
+    description: 'OpEx -$50, NPS +5. Риск: 20% шанс, что AI ошибается → NPS -15.',
+    apply: m => ({ OpEx: Math.max(m.OpEx - 50, 0), NPS: m.NPS + 5 }),
+    feedback: 'AI-помощник снизил затраты и повысил NPS!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ NPS: m.NPS - 15 }),
+      message: 'AI дал некорректные ответы — NPS снизился.',
+      condition: m => true
+    }
+  },
+  // Партнерства
+  {
+    icon: '🔗',
+    title: 'Интеграция с популярным сервисом',
+    description: 'Трафик +40%, LTV +$20. Риск: Если сервис меняет политику → Трафик -50%.',
+    apply: m => ({ Traffic: m.Traffic + 40, LTV: m.LTV + 20 }),
+    feedback: 'Интеграция дала мощный прирост!',
+    risk: {
+      chance: 0.15,
+      effect: m => ({ Traffic: Math.max(m.Traffic - 50, 0) }),
+      message: 'Сервис изменил политику — трафик упал.',
+      condition: m => true
+    }
   },
   {
-    icon: '💸',
-    title: 'Снижение цены',
-    description: 'Увеличивает конверсию на 3%, снижает LTV на $10.',
-    apply: (m: Metrics) => ({ Conversion: Math.min(m.Conversion + 3, 100), LTV: Math.max(m.LTV - 10, 0) }),
-    feedback: 'Конверсия выросла, но LTV немного снизился.'
+    icon: '🎉',
+    title: 'Совместная акция с брендом',
+    description: 'CAC -$15, Virality +0.2. Риск: При несовпадении ЦА → Конверсия -4%.',
+    apply: m => ({ CAC: Math.max(m.CAC - 15, 0), Virality: m.Virality + 0.2 }),
+    feedback: 'Акция с брендом повысила узнаваемость!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ Conversion: Math.max(m.Conversion - 4, 0) }),
+      message: 'Целевая аудитория не совпала — конверсия упала.',
+      condition: m => true
+    }
+  },
+  // Операции
+  {
+    icon: '📊',
+    title: 'Автоматизация отчетности',
+    description: 'OpEx -$30, Конверсия +1%. Риск: При сбое → Конверсия -3%.',
+    apply: m => ({ OpEx: Math.max(m.OpEx - 30, 0), Conversion: Math.min(m.Conversion + 1, 100) }),
+    feedback: 'Автоматизация ускорила аналитику!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ Conversion: Math.max(m.Conversion - 3, 0) }),
+      message: 'Сбой автоматизации — конверсия упала.',
+      condition: m => true
+    }
   },
   {
-    icon: '🛠️',
-    title: 'Инвестиции в поддержку',
-    description: 'Увеличивает Retention Rate на 8%, снижает бюджет на $100.',
-    apply: (m: Metrics) => ({ Retention: Math.min(m.Retention + 8, 100), Budget: m.Budget - 100 }),
-    feedback: 'Удержание выросло, но бюджет уменьшился.'
+    icon: '☁️',
+    title: 'Переход на облачные серверы',
+    description: 'OpEx -$40, NPS +3. Риск: 10% шанс на сбой → NPS -10.',
+    apply: m => ({ OpEx: Math.max(m.OpEx - 40, 0), NPS: m.NPS + 3 }),
+    feedback: 'Сервера стали быстрее и дешевле!',
+    risk: {
+      chance: 0.1,
+      effect: m => ({ NPS: m.NPS - 10 }),
+      message: 'Технический сбой — NPS снизился.',
+      condition: m => true
+    }
+  },
+  // Лояльность
+  {
+    icon: '💰',
+    title: 'Система кэшбэка',
+    description: 'Retention +10%, LTV +$10. Риск: При высокой конкуренции → CAC +$10.',
+    apply: m => ({ Retention: Math.min(m.Retention + 10, 100), LTV: m.LTV + 10 }),
+    feedback: 'Кэшбэк повысил лояльность!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ CAC: m.CAC + 10 }),
+      message: 'Конкуренты вынудили увеличить CAC.',
+      condition: m => true
+    }
   },
   {
-    icon: '🧪',
-    title: 'Экспериментальный маркетинг',
-    description: 'Снижает CAC на $20, риск: 40% шанс, что CAC вырастет на $25.',
-    apply: (m: Metrics) => ({ CAC: Math.max(m.CAC - 20, 0) }),
-    risk: { chance: 0.4, effect: (m: Metrics) => ({ CAC: m.CAC + 25 }), message: 'Эксперимент не удался — CAC вырос на $25.' },
-    feedback: 'CAC снизился, но был риск.'
+    icon: '🎟️',
+    title: 'Эксклюзивные мероприятия для клиентов',
+    description: 'NPS +12, Virality +0.3. Риск: OpEx +$200.',
+    apply: m => ({ NPS: m.NPS + 12, Virality: m.Virality + 0.3 }),
+    feedback: 'Мероприятия повысили лояльность и виральность!',
+    risk: {
+      effect: m => ({ OpEx: m.OpEx + 200 }),
+      message: 'Организация мероприятий увеличила OpEx.',
+      chance: 1,
+      condition: m => true
+    }
+  },
+  // Аналитика
+  {
+    icon: '🔬',
+    title: 'Глубокий анализ данных о клиентах',
+    description: 'Конверсия +4%, LTV +$10. Риск: При утечке данных → NPS -20, OpEx +$150.',
+    apply: m => ({ Conversion: Math.min(m.Conversion + 4, 100), LTV: m.LTV + 10 }),
+    feedback: 'Аналитика помогла понять клиентов!',
+    risk: {
+      chance: 0.15,
+      effect: m => ({ NPS: m.NPS - 20, OpEx: m.OpEx + 150 }),
+      message: 'Утечка данных — штрафы и падение NPS.',
+      condition: m => true
+    }
+  },
+  {
+    icon: '📈',
+    title: 'Прогнозирование спроса',
+    description: 'CAC -$5, Retention +5%. Риск: При ошибке прогноза → LTV -$10.',
+    apply: m => ({ CAC: Math.max(m.CAC - 5, 0), Retention: Math.min(m.Retention + 5, 100) }),
+    feedback: 'Прогноз оказался точным!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ LTV: Math.max(m.LTV - 10, 0) }),
+      message: 'Ошибка прогноза — LTV снизился.',
+      condition: m => true
+    }
+  },
+  // Внешние факторы
+  {
+    icon: '🏆',
+    title: 'Участие в отраслевой конференции',
+    description: 'Трафик +25%, LTV +$15. Риск: 30% шанс провала → Трафик -10%.',
+    apply: m => ({ Traffic: m.Traffic + 25, LTV: m.LTV + 15 }),
+    feedback: 'Конференция дала новых клиентов!',
+    risk: {
+      chance: 0.3,
+      effect: m => ({ Traffic: Math.max(m.Traffic - 10, 0) }),
+      message: 'Мероприятие провалилось — трафик упал.',
+      condition: m => true
+    }
+  },
+  {
+    icon: '🛍️',
+    title: 'Сезонная распродажа',
+    description: 'Конверсия +6%, LTV -$10. Риск: При низком NPS → Retention -8%.',
+    apply: m => ({ Conversion: Math.min(m.Conversion + 6, 100), LTV: Math.max(m.LTV - 10, 0) }),
+    feedback: 'Скидки увеличили продажи!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ Retention: Math.max(m.Retention - 8, 0) }),
+      message: 'Низкий NPS — удержание снизилось.',
+      condition: m => m.NPS < 50
+    }
+  },
+  // HR-стратегии
+  {
+    icon: '🎓',
+    title: 'Обучение сотрудников',
+    description: 'NPS +7, Retention +5%. Риск: OpEx +$80.',
+    apply: m => ({ NPS: m.NPS + 7, Retention: Math.min(m.Retention + 5, 100) }),
+    feedback: 'Команда стала сильнее!',
+    risk: {
+      effect: m => ({ OpEx: m.OpEx + 80 }),
+      message: 'Обучение стоит денег — OpEx вырос.',
+      chance: 1,
+      condition: m => true
+    }
+  },
+  {
+    icon: '🧑‍💻',
+    title: 'Аутсорсинг поддержки',
+    description: 'OpEx -$60. Риск: NPS -10 (низкое качество услуг).',
+    apply: m => ({ OpEx: Math.max(m.OpEx - 60, 0) }),
+    feedback: 'Затраты на поддержку снижены!',
+    risk: {
+      chance: 0.2,
+      effect: m => ({ NPS: m.NPS - 10 }),
+      message: 'Качество поддержки упало — NPS снизился.',
+      condition: m => true
+    }
   },
 ];
 
@@ -363,6 +661,34 @@ function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metri
     );
   }
 
+  const [metricsHistory, setMetricsHistory] = React.useState<Metrics[]>([]);
+  const [riskFails, setRiskFails] = React.useState(0);
+  const [abTests, setAbTests] = React.useState(0);
+  const [partnerships, setPartnerships] = React.useState(0);
+  const [viralityClients, setViralityClients] = React.useState(0);
+  const [supportUpgrades, setSupportUpgrades] = React.useState(0);
+  const [opexLowStreak, setOpexLowStreak] = React.useState(0);
+
+  function checkAchievements(metrics: Metrics) {
+    const params = {
+      metrics,
+      history: metricsHistory,
+      riskFails,
+      abTests,
+      partnerships,
+      viralityClients,
+      supportUpgrades,
+      opexLowStreak,
+    };
+    const newAch = [...achievements];
+    for (const ach of ACHIEVEMENTS_EXT) {
+      if (!newAch.includes(ach.label) && ach.check(params)) {
+        newAch.push(ach.label);
+      }
+    }
+    setAchievements(Array.from(new Set(newAch)));
+  }
+
   function handleInitiative(idx: number) {
     if (gameOver) return;
     let m = { ...metrics };
@@ -371,14 +697,18 @@ function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metri
     // Применяем эффект
     m = { ...m, ...ini.apply(m) };
     let feedback = ini.feedback;
+    let riskTriggered = false;
     // Риск
-    if (ini.risk && Math.random() < ini.risk.chance) {
-      m = { ...m, ...ini.risk.effect(m) };
-      feedback = ini.risk.message;
+    if (ini.risk && ('condition' in ini.risk ? typeof ini.risk.condition === 'function' ? ini.risk.condition(m) : true : true)) {
+      if (Math.random() < ini.risk.chance) {
+        m = { ...m, ...ini.risk.effect(m) };
+        feedback = ini.risk.message;
+        riskTriggered = true;
+      }
     }
     // Считаем дельту метрик
     const delta: Partial<Metrics> = {};
-    (['CAC', 'LTV', 'Retention', 'Conversion', 'Clients', 'Budget', 'Fixed', 'Profit'] as const).forEach(key => {
+    (['CAC', 'LTV', 'Retention', 'Conversion', 'Clients', 'Budget', 'Fixed', 'Profit', 'NPS', 'Virality', 'Traffic', 'OpEx'] as const).forEach(key => {
       if (metrics[key] !== m[key]) delta[key] = m[key];
     });
     setLastDelta(delta);
@@ -386,11 +716,39 @@ function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metri
     // Новые клиенты
     const newClients = Math.floor((m.Budget / (m.CAC || 1)) * (m.Conversion / 100));
     m.Clients = Math.max(m.Clients + newClients, 0);
+    // Virality клиентов
+    if (m.Virality > 0) {
+      setViralityClients(v => v + Math.floor(newClients * m.Virality));
+    }
     // LTV (оставляем как есть, можно усложнить)
     // Retention (оставляем как есть)
     // Прибыль за месяц
-    m.Profit = (m.LTV - m.CAC) * m.Clients - m.Fixed;
-    m.Budget = m.Budget + m.Profit - m.Fixed;
+    m.Profit = (m.LTV - m.CAC) * m.Clients - m.Fixed - m.OpEx;
+    m.Budget = m.Budget + m.Profit - m.Fixed - m.OpEx;
+
+    // Счётчики для ачивок
+    // 1. riskFails
+    if (riskTriggered && feedback && feedback.toLowerCase().includes('упал') || feedback.toLowerCase().includes('снизился') || feedback.toLowerCase().includes('штраф') || feedback.toLowerCase().includes('сбой') || feedback.toLowerCase().includes('потеря')) {
+      setRiskFails(r => r + 1);
+    }
+    // 2. abTests (каждое изменение Conversion)
+    if (delta.Conversion !== undefined && delta.Conversion > metrics.Conversion) {
+      setAbTests(a => a + 1);
+    }
+    // 3. partnerships (по ключевым словам в title)
+    if (/партнер|партнёр|интеграция|коллаб|акция|бренд/i.test(ini.title)) {
+      setPartnerships(p => p + 1);
+    }
+    // 4. supportUpgrades (по ключевым словам в title)
+    if (/поддержк|чат|ai|помощник|аутсорсинг/i.test(ini.title)) {
+      setSupportUpgrades(s => s + 1);
+    }
+    // 5. opexLowStreak
+    if (m.OpEx <= 100) {
+      setOpexLowStreak(s => s + 1);
+    } else {
+      setOpexLowStreak(0);
+    }
 
     // Проверка победы/поражения
     let over = false, win = false;
@@ -421,6 +779,8 @@ function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metri
     setWin(win);
     if (!over) setTurn(turn + 1);
     setInitiatives(getRandomInitiatives());
+    setMetricsHistory([...metricsHistory, m]);
+    checkAchievements(m);
   }
 
   // График прибыли
@@ -494,10 +854,14 @@ function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metri
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Retention: <span style={{ color: '#00b8ff' }}>{metrics.Retention}%</span>{lastDelta && lastOldMetrics && lastDelta.Retention !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Retention)}→{formatNumber(metrics.Retention)})</span> : null}</div>
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Conversion: <span style={{ color: '#7800ff' }}>{metrics.Conversion}%</span>{lastDelta && lastOldMetrics && lastDelta.Conversion !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Conversion)}→{formatNumber(metrics.Conversion)})</span> : null}</div>
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Клиенты: <span style={{ color: '#00b8ff' }}>{formatNumber(metrics.Clients)}</span>{lastDelta && lastOldMetrics && lastDelta.Clients !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Clients)}→{formatNumber(metrics.Clients)})</span> : null}</div>
+          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Трафик: <span style={{ color: '#00b8ff' }}>{formatNumber(metrics.Traffic)}</span>{lastDelta && lastOldMetrics && lastDelta.Traffic !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Traffic)}→{formatNumber(metrics.Traffic)})</span> : null}</div>
+          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Виральность: <span style={{ color: '#7800ff' }}>{metrics.Virality.toFixed(2)}</span>{lastDelta && lastOldMetrics && lastDelta.Virality !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({lastOldMetrics.Virality.toFixed(2)}→{metrics.Virality.toFixed(2)})</span> : null}</div>
+          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>NPS: <span style={{ color: '#00b8ff' }}>{metrics.NPS}</span>{lastDelta && lastOldMetrics && lastDelta.NPS !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.NPS)}→{formatNumber(metrics.NPS)})</span> : null}</div>
         </div>
         <div style={{ minWidth: 180 }}>
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Бюджет: <span style={{ color: '#00b8ff' }}>${formatNumber(metrics.Budget)}</span>{lastDelta && lastOldMetrics && lastDelta.Budget !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Budget)}→{formatNumber(metrics.Budget)})</span> : null}</div>
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Фикс. затраты: <span style={{ color: '#7800ff' }}>${formatNumber(metrics.Fixed)}</span>{lastDelta && lastOldMetrics && lastDelta.Fixed !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Fixed)}→{formatNumber(metrics.Fixed)})</span> : null}</div>
+          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>OpEx: <span style={{ color: '#7800ff' }}>${formatNumber(metrics.OpEx)}</span>{lastDelta && lastOldMetrics && lastDelta.OpEx !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.OpEx)}→{formatNumber(metrics.OpEx)})</span> : null}</div>
           <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Прибыль: <span style={{ color: metrics.Profit >= 0 ? '#00b8ff' : '#ff3b30' }}>${formatNumber(metrics.Profit)}</span>{lastDelta && lastOldMetrics && lastDelta.Profit !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Profit)}→{formatNumber(metrics.Profit)})</span> : null}</div>
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
@@ -567,6 +931,13 @@ export default function EconomySimulator() {
   const [initiatives, setInitiatives] = React.useState(getRandomInitiatives());
   const [lastDelta, setLastDelta] = React.useState<Partial<Metrics> | null>(null);
   const [lastOldMetrics, setLastOldMetrics] = React.useState<Metrics | null>(null);
+  const [metricsHistory, setMetricsHistory] = React.useState<Metrics[]>([]);
+  const [riskFails, setRiskFails] = React.useState(0);
+  const [abTests, setAbTests] = React.useState(0);
+  const [partnerships, setPartnerships] = React.useState(0);
+  const [viralityClients, setViralityClients] = React.useState(0);
+  const [supportUpgrades, setSupportUpgrades] = React.useState(0);
+  const [opexLowStreak, setOpexLowStreak] = React.useState(0);
 
   const handleExit = () => {
     setShowLegend(true);
@@ -581,6 +952,26 @@ export default function EconomySimulator() {
     setLastDelta(null);
     setLastOldMetrics(null);
   };
+
+  function checkAchievements(metrics: Metrics) {
+    const params = {
+      metrics,
+      history: metricsHistory,
+      riskFails,
+      abTests,
+      partnerships,
+      viralityClients,
+      supportUpgrades,
+      opexLowStreak,
+    };
+    const newAch = [...achievements];
+    for (const ach of ACHIEVEMENTS_EXT) {
+      if (!newAch.includes(ach.label) && ach.check(params)) {
+        newAch.push(ach.label);
+      }
+    }
+    setAchievements(Array.from(new Set(newAch)));
+  }
 
   return (
     <UnitQuestGame
