@@ -467,29 +467,86 @@ function AchievementNotification({ achievement, onClose }: { achievement: Achiev
   return (
     <div style={{
       position: 'fixed',
-      bottom: '24px',
-      right: '24px',
-      background: 'rgba(0,0,0,0.9)',
-      color: 'white',
-      padding: '16px 24px',
-      borderRadius: '16px',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0,0,0,0.5)',
       display: 'flex',
+      justifyContent: 'center',
       alignItems: 'center',
-      gap: '12px',
-      transform: show ? 'translateX(0)' : 'translateX(120%)',
-      opacity: show ? 1 : 0,
-      transition: 'all 0.3s ease',
       zIndex: 1000,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      opacity: show ? 1 : 0,
+      transition: 'opacity 0.3s ease'
     }}>
-      <div style={{ fontSize: '32px' }}>{achievement.icon}</div>
-      <div>
-        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-          Достижение разблокировано!
+      <div style={{
+        background: 'white',
+        padding: '32px',
+        borderRadius: '24px',
+        maxWidth: '400px',
+        width: '90%',
+        textAlign: 'center',
+        transform: show ? 'scale(1)' : 'scale(0.9)',
+        transition: 'transform 0.3s ease',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+      }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>🎊</div>
+        <h3 style={{ 
+          fontSize: '24px', 
+          marginBottom: '24px',
+          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 700
+        }}>
+          Ваше новое достижение!
+        </h3>
+        <div style={{
+          padding: '24px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+          color: 'white',
+          marginBottom: '24px'
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>
+            {achievement.icon}
+          </div>
+          <div style={{ 
+            fontWeight: 600, 
+            marginBottom: '8px',
+            fontSize: '18px'
+          }}>
+            {achievement.title}
+          </div>
+          <div style={{ 
+            fontSize: '14px',
+            opacity: 0.8
+          }}>
+            {achievement.description}
+          </div>
         </div>
-        <div style={{ fontSize: '14px', opacity: 0.9 }}>
-          {achievement.title}
-        </div>
+        <button
+          onClick={() => {
+            setShow(false);
+            setTimeout(onClose, 300);
+          }}
+          style={{
+            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '12px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            width: '100%',
+            transition: 'transform 0.2s ease, opacity 0.2s ease'
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          Продолжить
+        </button>
       </div>
     </div>
   );
@@ -903,408 +960,425 @@ export default function EconomySimulator() {
 
   return (
     <>
-      <section style={{ 
-        maxWidth: 1000, 
-        margin: '0 auto', 
-        padding: '32px 32px',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderRadius: 32,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+      <div style={{
+        minHeight: '100vh',
+        padding: '20px',
+        display: 'grid',
+        alignItems: 'center'
       }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: 24 
+        <section style={{ 
+          maxWidth: 1000, 
+          margin: '0 auto',
+          padding: '24px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRadius: 32,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          maxHeight: 'calc(100vh - 40px)',
+          overflowY: 'auto'
         }}>
-          <h2 style={{ 
-            fontWeight: 700, 
-            fontSize: 32,
-            letterSpacing: '-0.02em',
-            marginBottom: 24,
-            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            AI Assistant Empire
-          </h2>
-          <button
-            onClick={() => setShowAchievementModal(true)}
-            style={{
-              background: 'none',
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '12px',
-              padding: '8px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              fontSize: '15px'
-            }}
-          >
-            🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
-          </button>
-        </div>
-        <div style={{ marginBottom: 32 }}>
+          {/* Уменьшаем некоторые отступы для более компактного отображения */}
           <div style={{ 
-            fontSize: 17, 
-            color: '#1d1d1f',
-            marginBottom: 24,
-            display: 'flex',
+            display: 'flex', 
+            justifyContent: 'space-between', 
             alignItems: 'center',
-            gap: 8
+            marginBottom: 16
           }}>
-            <span style={{ fontWeight: 500 }}>Ход:</span> 
-            <span style={{ 
-              background: '#000', 
-              color: '#fff',
-              padding: '4px 12px',
-              borderRadius: 12,
-              fontSize: 15
-            }}>{turn} / 15</span>
-          </div>
-
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr',
-            gap: 24,
-            margin: '24px 0'
-          }}>
-            <div style={{ 
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 24,
-              padding: 24,
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0,0,0,0.1)'
+            <h2 style={{ 
+              fontWeight: 700, 
+              fontSize: 28,
+              letterSpacing: '-0.02em',
+              margin: 0,
+              background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
             }}>
-              <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Profit Net</div>
-              <div style={{ 
-                fontWeight: 600, 
-                fontSize: 32,
-                letterSpacing: '-0.02em',
-                color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
-              }}>
-                ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
-              </div>
-            </div>
-            <div style={{ 
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 24,
-              padding: 24,
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Баланс</div>
-              <div style={{ 
-                fontWeight: 600, 
-                fontSize: 32,
-                letterSpacing: '-0.02em',
-                color: balance < 0 ? '#ff3b30' : '#1d1d1f'
-              }}>
-                ${formatNumber(balance)}
-              </div>
-            </div>
+              AI Assistant Empire
+            </h2>
+            <button
+              onClick={() => setShowAchievementModal(true)}
+              style={{
+                background: 'none',
+                border: '1px solid rgba(0,0,0,0.1)',
+                borderRadius: '12px',
+                padding: '8px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '15px'
+              }}
+            >
+              🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+            </button>
           </div>
-
           <div style={{ 
-            width: '100%', 
-            height: 200,
-            margin: '24px 0',
-            background: 'rgba(255,255,255,0.8)',
-            borderRadius: 24,
-            padding: 20,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0,0,0,0.1)'
+            flex: 1,
+            overflowY: 'auto',
+            paddingRight: '16px',
+            marginRight: '-16px' // Компенсируем отступ скролла
           }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={profitNetHistory.map((v, i) => ({ turn: i + 1, profitNet: v }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                <XAxis 
-                  dataKey="turn" 
-                  tickCount={16} 
-                  stroke="#86868b"
-                  label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
-                />
-                <YAxis 
-                  tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
-                  domain={['auto', 'auto']} 
-                  stroke="#86868b"
-                  label={{ value: 'Profit Net', angle: -90, position: 'insideLeft', offset: 10 }} 
-                />
-                <Tooltip 
-                  formatter={v => `$${v.toLocaleString('ru-RU')}`} 
-                  labelFormatter={l => `Ход: ${l}`}
-                  contentStyle={{
-                    background: 'rgba(255,255,255,0.95)',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: 12,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="profitNet" 
-                  stroke="#000"
-                  strokeWidth={2.5}
-                  dot={false}
-                />
-                <ReferenceLine 
-                  y={50000} 
-                  stroke="#2ecc71" 
-                  strokeDasharray="6 2" 
-                  label={{ 
-                    value: 'Цель: $50,000', 
-                    position: 'right', 
-                    fill: '#2ecc71', 
-                    fontWeight: 600, 
-                    fontSize: 13 
-                  }} 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 12,
-            marginBottom: 24
-          }}>
-            {[
-              { label: 'Маржинальность', value: `${(metrics.Margin * 100).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
-              { label: 'AMPPU', value: `$${formatNumber(metrics.AMPPU)}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
-              { label: 'Прибыль на пользователя', value: `$${(metrics.AMPU - metrics.CPUser).toFixed(2)}`, color: (metrics.AMPU - metrics.CPUser) < 0 ? '#ff3b30' : '#1d1d1f' }
-            ].map((item, index) => (
-              <div key={index} style={{ 
-                background: 'rgba(255,255,255,0.8)',
-                borderRadius: 20,
-                padding: 20,
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0,0,0,0.1)'
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ 
+                fontSize: 15, 
+                color: '#1d1d1f',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
               }}>
-                <div style={{ fontSize: 13, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
-                <div style={{ fontWeight: 600, fontSize: 24, color: item.color }}>{item.value}</div>
+                <span style={{ fontWeight: 500 }}>Ход:</span> 
+                <span style={{ 
+                  background: '#000', 
+                  color: '#fff',
+                  padding: '4px 12px',
+                  borderRadius: 12,
+                  fontSize: 15
+                }}>{turn} / 15</span>
               </div>
-            ))}
-      </div>
 
-          <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, 1fr)',
-            gap: 8,
-            marginBottom: 24
-          }}>
-            {[
-              { label: 'Fix Costs', value: `$${formatNumber(metrics.FixCosts)}`, prev: prevMetrics?.FixCosts },
-              { label: 'Users', value: formatNumber(metrics.Users), prev: prevMetrics?.Users },
-              { label: 'AvPrice', value: `$${formatNumber(metrics.AvPrice)}`, prev: prevMetrics?.AvPrice },
-              { label: 'COGS', value: `$${formatNumber(metrics.COGS)}`, prev: prevMetrics?.COGS },
-              { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
-              { label: 'CPUser', value: `$${formatNumber(metrics.CPUser)}`, prev: prevMetrics?.CPUser }
-            ].map((item, index) => {
-              const metricKey = METRIC_DISPLAY_MAP[item.label];
-              return (
-                <div key={index} style={{ 
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr',
+                gap: 24,
+                margin: '24px 0'
+              }}>
+                <div style={{ 
                   background: 'rgba(255,255,255,0.8)',
-                  borderRadius: 16,
-                  padding: 12,
+                  borderRadius: 24,
+                  padding: 24,
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(0,0,0,0.1)'
                 }}>
-                  <div style={{ fontSize: 13, color: '#86868b', marginBottom: 2 }}>{item.label}</div>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{item.value}</div>
-                  {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
-                    <div style={{ fontSize: 11, color: '#86868b', marginTop: 2 }}>
-                      ({typeof item.prev === 'number' ? 
-                        (item.label === 'C1' ? 
-                          `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
-                          `${item.label.includes('$') ? '$' : ''}${formatNumber(item.prev)} → ${item.label.includes('$') ? '$' : ''}${formatNumber(metrics[metricKey])}`
-                        ) : ''})
-        </div>
-      )}
-    </div>
-              );
-            })}
-          </div>
+                  <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Profit Net</div>
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: 32,
+                    letterSpacing: '-0.02em',
+                    color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
+                  }}>
+                    ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
+                  </div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.8)',
+                  borderRadius: 24,
+                  padding: 24,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Баланс</div>
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: 32,
+                    letterSpacing: '-0.02em',
+                    color: balance < 0 ? '#ff3b30' : '#1d1d1f'
+                  }}>
+                    ${formatNumber(balance)}
+                  </div>
+                </div>
+              </div>
 
-          {!department && !gameOver && (
-            <>
               <div style={{ 
-                fontWeight: 600, 
-                fontSize: 20,
-                marginBottom: 16,
-                color: '#1d1d1f'
+                width: '100%', 
+                height: 200,
+                margin: '16px 0',
+                background: 'rgba(255,255,255,0.8)',
+                borderRadius: 24,
+                padding: '16px',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(0,0,0,0.1)'
               }}>
-                Выберите направление:
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={profitNetHistory.map((v, i) => ({ turn: i + 1, profitNet: v }))} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                    <XAxis 
+                      dataKey="turn" 
+                      tickCount={16} 
+                      stroke="#86868b"
+                      label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
+                    />
+                    <YAxis 
+                      tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                      domain={['auto', 'auto']} 
+                      stroke="#86868b"
+                      label={{ value: 'Profit Net', angle: -90, position: 'insideLeft', offset: 10 }} 
+                    />
+                    <Tooltip 
+                      formatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                      labelFormatter={l => `Ход: ${l}`}
+                      contentStyle={{
+                        background: 'rgba(255,255,255,0.95)',
+                        border: '1px solid rgba(0,0,0,0.1)',
+                        borderRadius: 12,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="profitNet" 
+                      stroke="#000"
+                      strokeWidth={2.5}
+                      dot={false}
+                    />
+                    <ReferenceLine 
+                      y={50000} 
+                      stroke="#2ecc71" 
+                      strokeDasharray="6 2" 
+                      label={{ 
+                        value: 'Цель: $50,000', 
+                        position: 'right', 
+                        fill: '#2ecc71', 
+                        fontWeight: 600, 
+                        fontSize: 13 
+                      }} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <div style={{ 
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 12
-              }}>
-                {DEPARTMENTS.map(dep => (
-                  <button 
-                    key={dep.key} 
-                    onClick={() => handleDepartmentSelect(dep.key)} 
-                    style={{ 
-                      padding: '16px 20px',
-                      borderRadius: 20,
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      background: 'rgba(255,255,255,0.8)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <span style={{ fontSize: 28, marginBottom: 6 }}>{dep.icon}</span>
-                    <span style={{ 
-                      fontWeight: 600,
-                      fontSize: 17,
-                      color: '#1d1d1f',
-                      marginBottom: 6
-                    }}>{dep.label}</span>
-                    <span style={{ 
-                      fontSize: 12,
-                      color: '#86868b',
-                      lineHeight: 1.4
-                    }}>{dep.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
 
-          {department && !gameOver && (
-            <>
-              <div style={{ 
-                fontWeight: 600, 
-                fontSize: 20,
-                marginBottom: 16,
-                color: '#1d1d1f'
-              }}>
-                Выберите инициативу:
-              </div>
               <div style={{ 
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 12
+                gap: 12,
+                marginBottom: 24
               }}>
-                {currentInitiatives.map((ini, idx) => (
-                  <button 
-                    key={ini.title} 
-                    onClick={() => handleInitiative(idx)} 
-                    style={{ 
-                      padding: '16px 20px',
-                      borderRadius: 20,
-                      border: '1px solid rgba(0,0,0,0.1)',
+                {[
+                  { label: 'Маржинальность', value: `${(metrics.Margin * 100).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
+                  { label: 'AMPPU', value: `$${formatNumber(metrics.AMPPU)}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
+                  { label: 'Прибыль на пользователя', value: `$${(metrics.AMPU - metrics.CPUser).toFixed(2)}`, color: (metrics.AMPU - metrics.CPUser) < 0 ? '#ff3b30' : '#1d1d1f' }
+                ].map((item, index) => (
+                  <div key={index} style={{ 
+                    background: 'rgba(255,255,255,0.8)',
+                    borderRadius: 20,
+                    padding: 20,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(0,0,0,0.1)'
+                  }}>
+                    <div style={{ fontSize: 13, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
+                    <div style={{ fontWeight: 600, fontSize: 24, color: item.color }}>{item.value}</div>
+                  </div>
+                ))}
+          </div>
+
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 1fr)',
+                gap: 8,
+                marginBottom: 24
+              }}>
+                {[
+                  { label: 'Fix Costs', value: `$${formatNumber(metrics.FixCosts)}`, prev: prevMetrics?.FixCosts },
+                  { label: 'Users', value: formatNumber(metrics.Users), prev: prevMetrics?.Users },
+                  { label: 'AvPrice', value: `$${formatNumber(metrics.AvPrice)}`, prev: prevMetrics?.AvPrice },
+                  { label: 'COGS', value: `$${formatNumber(metrics.COGS)}`, prev: prevMetrics?.COGS },
+                  { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
+                  { label: 'CPUser', value: `$${formatNumber(metrics.CPUser)}`, prev: prevMetrics?.CPUser }
+                ].map((item, index) => {
+                  const metricKey = METRIC_DISPLAY_MAP[item.label];
+                  return (
+                    <div key={index} style={{ 
                       background: 'rgba(255,255,255,0.8)',
+                      borderRadius: 16,
+                      padding: 12,
                       backdropFilter: 'blur(20px)',
                       WebkitBackdropFilter: 'blur(20px)',
-                      cursor: gameOver ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'left',
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div>
-                      <div style={{ 
-                        fontWeight: 600,
-                        fontSize: 17,
-                        color: '#1d1d1f',
-                        marginBottom: 6
-                      }}>{ini.title}</div>
-                      <div style={{ 
-                        color: '#86868b',
-                        fontSize: 14,
-                        marginBottom: 6,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>{ini.description}</div>
-                    </div>
-                    <div style={{ 
-                      display: 'inline-block',
-                      padding: '3px 10px',
-                      borderRadius: 10,
-                      background: '#000',
-                      color: '#fff',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      alignSelf: 'flex-start'
+                      border: '1px solid rgba(0,0,0,0.1)'
                     }}>
-                      Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
-                    </div>
-                  </button>
-                ))}
+                      <div style={{ fontSize: 13, color: '#86868b', marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontWeight: 600, fontSize: 15 }}>{item.value}</div>
+                      {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
+                        <div style={{ fontSize: 11, color: '#86868b', marginTop: 2 }}>
+                          ({typeof item.prev === 'number' ? 
+                            (item.label === 'C1' ? 
+                              `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
+                              `${item.label.includes('$') ? '$' : ''}${formatNumber(item.prev)} → ${item.label.includes('$') ? '$' : ''}${formatNumber(metrics[metricKey])}`
+                            ) : ''})
+          </div>
+        )}
+      </div>
+                    );
+                  })}
               </div>
-            </>
-          )}
 
-          {message && (
-            <div style={{ 
-              marginTop: 32,
-              padding: 20,
-              borderRadius: 20,
-              background: 'rgba(0,0,0,0.05)',
-              color: '#1d1d1f',
-              fontSize: 17,
-              fontWeight: 500
-            }}>{message}</div>
-          )}
+              {!department && !gameOver && (
+                <>
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: 20,
+                    marginBottom: 16,
+                    color: '#1d1d1f'
+                  }}>
+                    Выберите направление:
+                  </div>
+                  <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 12
+                  }}>
+                    {DEPARTMENTS.map(dep => (
+                      <button 
+                        key={dep.key} 
+                        onClick={() => handleDepartmentSelect(dep.key)} 
+                        style={{ 
+                          padding: '16px 20px',
+                          borderRadius: 20,
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          background: 'rgba(255,255,255,0.8)',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <span style={{ fontSize: 28, marginBottom: 6 }}>{dep.icon}</span>
+                        <span style={{ 
+                          fontWeight: 600,
+                          fontSize: 17,
+                          color: '#1d1d1f',
+                          marginBottom: 6
+                        }}>{dep.label}</span>
+                        <span style={{ 
+                          fontSize: 12,
+                          color: '#86868b',
+                          lineHeight: 1.4
+                        }}>{dep.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
 
-          {profitChangeMessage && (
-            <div style={{ 
-              marginTop: 16,
-              padding: 20,
-              borderRadius: 20,
-              background: profitChangeMessage.includes('вырос') ? 'rgba(46,204,113,0.1)' : 
-                         profitChangeMessage.includes('снизился') ? 'rgba(255,59,48,0.1)' : 
-                         'rgba(0,0,0,0.05)',
-              color: profitChangeMessage.includes('вырос') ? '#2ecc71' : 
-                    profitChangeMessage.includes('снизился') ? '#ff3b30' : 
-                    '#86868b',
-              fontSize: 17,
-              fontWeight: 500
-            }}>{profitChangeMessage}</div>
-          )}
+              {department && !gameOver && (
+                <>
+                  <div style={{ 
+                    fontWeight: 600, 
+                    fontSize: 20,
+                    marginBottom: 16,
+                    color: '#1d1d1f'
+                  }}>
+                    Выберите инициативу:
+                  </div>
+                  <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 12
+                  }}>
+                    {currentInitiatives.map((ini, idx) => (
+                      <button 
+                        key={ini.title} 
+                        onClick={() => handleInitiative(idx)} 
+                        style={{ 
+                          padding: '16px 20px',
+                          borderRadius: 20,
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          background: 'rgba(255,255,255,0.8)',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          cursor: gameOver ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <div>
+                          <div style={{ 
+                            fontWeight: 600,
+                            fontSize: 17,
+                            color: '#1d1d1f',
+                            marginBottom: 6
+                          }}>{ini.title}</div>
+                          <div style={{ 
+                            color: '#86868b',
+                            fontSize: 14,
+                            marginBottom: 6,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>{ini.description}</div>
+                        </div>
+                        <div style={{ 
+                          display: 'inline-block',
+                          padding: '3px 10px',
+                          borderRadius: 10,
+                          background: '#000',
+                          color: '#fff',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          alignSelf: 'flex-start'
+                        }}>
+                          Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
 
-          {gameOver && (
-            <div 
-              onClick={() => isVictory && setShowFireworks(true)}
-              style={{ 
-                marginTop: 32,
-                padding: 24,
-                borderRadius: 24,
-                background: isVictory ? 'rgba(46,204,113,0.1)' : 'rgba(255,59,48,0.1)',
-                color: isVictory ? '#2ecc71' : '#ff3b30',
-                fontSize: 24,
-                fontWeight: 600,
-                textAlign: 'center',
-                cursor: isVictory ? 'pointer' : 'default',
-                transition: 'all 0.2s ease',
-                transform: isVictory ? 'scale(1.02)' : 'none'
-              }}>
-              {metrics.ProfitNet >= 50000 ? 'Вы выиграли!' : 'Игра окончена'}
+              {message && (
+                <div style={{ 
+                  marginTop: 32,
+                  padding: 20,
+                  borderRadius: 20,
+                  background: 'rgba(0,0,0,0.05)',
+                  color: '#1d1d1f',
+                  fontSize: 17,
+                  fontWeight: 500
+                }}>{message}</div>
+              )}
+
+              {profitChangeMessage && (
+                <div style={{ 
+                  marginTop: 16,
+                  padding: 20,
+                  borderRadius: 20,
+                  background: profitChangeMessage.includes('вырос') ? 'rgba(46,204,113,0.1)' : 
+                             profitChangeMessage.includes('снизился') ? 'rgba(255,59,48,0.1)' : 
+                             'rgba(0,0,0,0.05)',
+                  color: profitChangeMessage.includes('вырос') ? '#2ecc71' : 
+                        profitChangeMessage.includes('снизился') ? '#ff3b30' : 
+                        '#86868b',
+                  fontSize: 17,
+                  fontWeight: 500
+                }}>{profitChangeMessage}</div>
+              )}
+
+              {gameOver && (
+                <div 
+                  onClick={() => isVictory && setShowFireworks(true)}
+                  style={{ 
+                    marginTop: 32,
+                    padding: 24,
+                    borderRadius: 24,
+                    background: isVictory ? 'rgba(46,204,113,0.1)' : 'rgba(255,59,48,0.1)',
+                    color: isVictory ? '#2ecc71' : '#ff3b30',
+                    fontSize: 24,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    cursor: isVictory ? 'pointer' : 'default',
+                    transition: 'all 0.2s ease',
+                    transform: isVictory ? 'scale(1.02)' : 'none'
+                  }}>
+                  {metrics.ProfitNet >= 50000 ? 'Вы выиграли!' : 'Игра окончена'}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
       {(gameOver && isVictory && showFireworks) && <VictoryFireworks />}
       {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} />}
       {showAchievementModal && (
