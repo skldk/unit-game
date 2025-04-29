@@ -1,14 +1,15 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import EconomySimulator from './pages/EconomySimulator';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<EconomySimulator />} />
-      </Routes>
-    </BrowserRouter>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      padding: '20px'
+    }}>
+      <EconomySimulator />
+    </div>
   );
 }
 

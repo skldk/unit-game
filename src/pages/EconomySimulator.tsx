@@ -1,1038 +1,1338 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { Fireworks } from 'fireworks-js';
 
 function formatNumber(value: number) {
   return value.toLocaleString('ru-RU');
 }
 
-// Целевые параметры для задания (пример)
-const TARGET = {
-  minMonths: 12,
-  cac: 3000,
-  ltv: 12000,
-  fixed: 9000,
-};
-
-// Описание и оформление ачивок
-const ACHIEVEMENTS: Record<string, { label: string; color: string; bg: string; icon: string; desc: string }> = {
-  'Первая попытка!': {
-    label: 'Первая попытка!',
-    color: '#2196f3',
-    bg: 'linear-gradient(90deg,#e3f2fd,#bbdefb)',
-    icon: '🚀',
-    desc: 'Ты начал путь!'
-  },
-  'Экономист!': {
-    label: 'Экономист!',
-    color: '#58cc02',
-    bg: 'linear-gradient(90deg,#e6ffe6,#b9f6ca)',
-    icon: '🧠',
-    desc: 'Ты подобрал идеальные параметры!'
-  },
-  'Не сдал с 3-й попытки': {
-    label: 'Не сдал с 3-й попытки',
-    color: '#ff4b4b',
-    bg: 'linear-gradient(90deg,#ffeaea,#ffd6d6)',
-    icon: '💀',
-    desc: 'Попробуй ещё раз — опыт важнее победы!'
-  },
-};
-
-// --- Расширенные ачивки ---
-const ACHIEVEMENTS_EXT: {
-  key: string;
-  label: string;
-  desc: string;
-  check: (params: { metrics: Metrics; history: Metrics[]; riskFails: number; abTests: number; partnerships: number; viralityClients: number; supportUpgrades: number; opexLowStreak: number; }) => boolean;
-}[] = [
-  {
-    key: 'cacczar',
-    label: 'Царь CAC',
-    desc: 'Снизить CAC до $25 и держать 3 хода подряд.',
-    check: ({ history }) => history.slice(-3).every(m => m.CAC <= 25),
-  },
-  {
-    key: 'ltvlegend',
-    label: 'LTV-легенда',
-    desc: 'LTV ≥ $200, Retention ≥ 80%, NPS ≥ 70.',
-    check: ({ metrics }) => metrics.LTV >= 200 && metrics.Retention >= 80 && metrics.NPS >= 70,
-  },
-  {
-    key: 'viralvirus',
-    label: 'Виральный вирус',
-    desc: 'Привлечь 500 клиентов через Virality.',
-    check: ({ viralityClients }) => viralityClients >= 500,
-  },
-  {
-    key: 'retuniverse',
-    label: 'Удержатель вселенной',
-    desc: 'Retention ≥ 90% после 5 улучшений продукта.',
-    check: ({ metrics, supportUpgrades }) => metrics.Retention >= 90 && supportUpgrades >= 5,
-  },
-  {
-    key: 'riskmaster',
-    label: 'Мастер рисков',
-    desc: 'Выиграть после 3 негативных событий.',
-    check: ({ riskFails, metrics }) => riskFails >= 3 && metrics.Profit >= WIN_PROFIT,
-  },
-  {
-    key: 'optimizer',
-    label: 'Оптимизатор',
-    desc: '10 успешных A/B тестов (инициативы с приростом Conversion).',
-    check: ({ abTests }) => abTests >= 10,
-  },
-  {
-    key: 'networker',
-    label: 'Нетворкер',
-    desc: '5 партнерств.',
-    check: ({ partnerships }) => partnerships >= 5,
-  },
-  {
-    key: 'crisismanager',
-    label: 'Кризис-менеджер',
-    desc: 'Пережить 2 экономических кризиса (негативные риски).',
-    check: ({ riskFails }) => riskFails >= 2,
-  },
-  {
-    key: 'supportninja',
-    label: 'Ниндзя поддержки',
-    desc: 'NPS ≥ 85 после 3 улучшений поддержки.',
-    check: ({ metrics, supportUpgrades }) => metrics.NPS >= 85 && supportUpgrades >= 3,
-  },
-  {
-    key: 'financemaster',
-    label: 'Финансовый гуру',
-    desc: 'OpEx ≤ $100 в течение 4 ходов.',
-    check: ({ history }) => history.slice(-4).every(m => m.OpEx <= 100),
-  },
-];
-
-// График выхода на окупаемость
-function BreakEvenChart({ cac, ltv, fixed, users }: { cac: number; ltv: number; fixed: number; users: number }) {
-  // Моделируем 24 месяца
-  const months = 24;
-  let balance = -fixed; // стартовые расходы
-  const data: { x: number; y: number }[] = [{ x: 0, y: balance }];
-  let breakEvenMonth: number | null = null;
-  for (let i = 1; i <= months; i++) {
-    balance += (cac - ltv) * users - fixed;
-    data.push({ x: i, y: balance });
-    if (breakEvenMonth === null && balance >= 0) breakEvenMonth = i;
-  }
-  // Нормализация для графика
-  const minY = Math.min(...data.map(d => d.y), 0);
-  const maxY = Math.max(...data.map(d => d.y), 0);
-  const W = 420, H = 200, pad = 44;
-  const scaleX = (x: number) => pad + (x / months) * (W - 2 * pad);
-  const scaleY = (y: number) => H - pad - ((y - minY) / (maxY - minY || 1)) * (H - 2 * pad);
-  // Линия графика
-  const path = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${scaleX(d.x)},${scaleY(d.y)}`).join(' ');
-  // Ось X: подписи через 6 мес
-  const xLabels = [0, 6, 12, 18, 24];
-  // Ось Y: подписи min, 0, max
-  const yLabels = [minY, 0, maxY];
-  // Деления (grid)
-  const gridX = xLabels;
-  const gridY = [minY, (minY+maxY)/2, 0, (maxY+0)/2, maxY];
-  return (
-    <div style={{ margin: '32px auto 0', maxWidth: 640, width: '100%', background: 'rgba(255,255,255,0.85)', borderRadius: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.10)', padding: 32, display: 'block' }}>
-      <div style={{ fontWeight: 700, fontSize: 22, background: 'linear-gradient(90deg,#0a2540,#00b8ff 80%)', WebkitBackgroundClip: 'text', color: 'transparent', marginBottom: 8, letterSpacing: -1 }}>График выхода на окупаемость</div>
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          style={{ width: '100%', height: 'auto', minWidth: 320, maxWidth: '100%', display: 'block' }}
-          preserveAspectRatio="xMinYMin meet"
-        >
-          {/* Grid Y */}
-          {gridY.map((y, i) => (
-            <line key={i} x1={pad} y1={scaleY(y)} x2={W - pad} y2={scaleY(y)} stroke="#e5e5e7" strokeWidth={1} strokeDasharray="4 4" />
-          ))}
-          {/* Grid X */}
-          {gridX.map((x, i) => (
-            <line key={i} y1={pad} x1={scaleX(x)} y2={H - pad} x2={scaleX(x)} stroke="#e5e5e7" strokeWidth={1} strokeDasharray="4 4" />
-          ))}
-          {/* Оси */}
-          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#bbb" strokeWidth={1.5} />
-          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="#bbb" strokeWidth={1.5} />
-          {/* Линия графика */}
-          <path d={path} fill="none" stroke="url(#grad)" strokeWidth={3} />
-          <defs>
-            <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#00b8ff" />
-              <stop offset="100%" stopColor="#7800ff" />
-            </linearGradient>
-          </defs>
-          {/* Точка выхода на окупаемость */}
-          {breakEvenMonth && (
-            <circle
-              cx={scaleX(breakEvenMonth)}
-              cy={scaleY(data[breakEvenMonth].y)}
-              r={8}
-              fill="#fff"
-              stroke="#00b8ff"
-              strokeWidth={4}
-              style={{ filter: 'drop-shadow(0 2px 8px #00b8ff44)' }}
-            />
-          )}
-          {/* Подписи X */}
-          {xLabels.map(x => (
-            <text key={x} x={scaleX(x)} y={H - pad + 28} fontSize={15} fill="#888" textAnchor="middle">{x}</text>
-          ))}
-          {/* Подписи Y */}
-          {yLabels.map(y => (
-            <text key={y} x={pad - 12} y={scaleY(y) + 5} fontSize={15} fill="#888" textAnchor="end">{formatNumber(Math.round(y))}</text>
-          ))}
-          {/* Названия осей */}
-          <text x={W/2} y={H - 2} fontSize={16} fill="#0a2540" textAnchor="middle" fontWeight={600}>Месяцы</text>
-          <text x={pad - 32} y={pad - 8} fontSize={16} fill="#0a2540" textAnchor="middle" fontWeight={600} transform={`rotate(-90,${pad - 32},${pad - 8})`}>Баланс, ₽</text>
-        </svg>
-      </div>
-      <div style={{ color: '#888', fontSize: 15, marginTop: 6 }}>
-        {breakEvenMonth && (
-          <span style={{ color: '#00b8ff', fontWeight: 600 }}>
-            Окупаемость: {breakEvenMonth} мес.
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Функция для обработки ввода только цифр и обновления значения
-function handleNumberInput(e: React.ChangeEvent<HTMLInputElement>, setter: (v: number) => void) {
-  const raw = e.target.value.replace(/\D/g, '');
-  setter(raw ? parseInt(raw, 10) : 0);
-}
-
-// Вынести ачивки в футер
-function AchievementsFooter({ achievements }: { achievements: string[] }) {
-  if (!achievements.length) return null;
-  return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      zIndex: 10,
-      pointerEvents: 'none',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      paddingTop: 0,
-    }}>
-      <div style={{
-        width: 'auto',
-        background: 'rgba(255,255,255,0.97)',
-        boxShadow: '0 2px 24px rgba(0,0,0,0.08)',
-        padding: '18px 32px 12px 32px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 18,
-        minHeight: 56,
-        fontFamily: 'SF Pro Display, Helvetica Neue, Arial, sans-serif',
-        borderRadius: 18,
-        marginTop: 18,
-        pointerEvents: 'auto',
-      }}>
-        {achievements.map((ach, i) => {
-          const meta = ACHIEVEMENTS[ach] || { label: ach, color: '#888', bg: '#f3f3f3', icon: '⭐', desc: '' };
-          return (
-            <div key={i} style={{
-              background: '#fafafa',
-              color: meta.color,
-              borderRadius: 14,
-              padding: '10px 18px',
-              fontWeight: 700,
-              fontSize: 16,
-              border: `1.5px solid #e5e5e7`,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              minWidth: 160,
-              marginBottom: 0,
-              position: 'relative',
-              transition: 'box-shadow 0.3s',
-            }}>
-              <span style={{ fontSize: 22, marginRight: 6 }}>{meta.icon}</span>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 1 }}>{meta.label}</div>
-                <div style={{ fontWeight: 500, fontSize: 13, color: '#888', opacity: 0.85 }}>{meta.desc}</div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// --- Unit Quest Game ---
-// Для анимаций
-const MAX_TURNS = 10;
-const WIN_PROFIT = 200000;
-
-// CSS для fade/slide анимаций (можно вынести в отдельный файл)
-const fadeStyle = {
-  transition: 'opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1)',
-  opacity: 1,
-  transform: 'translateY(0px)'
-};
-const fadeHiddenStyle = {
-  opacity: 0,
-  transform: 'translateY(24px)'
-};
-
-function getRandomInitMetrics() {
+function getInitialMetrics() {
   return {
-    CAC: Math.round(40 + Math.random() * 20), // 40-60
-    LTV: Math.round(20 + Math.random() * 20), // 20-40
-    Retention: Math.round(50 + Math.random() * 20), // 50-70
-    Conversion: Math.round(3 + Math.random() * 4), // 3-7
-    Clients: Math.round(80 + Math.random() * 40), // 80-120
-    Budget: Math.round(800 + Math.random() * 400), // 800-1200
-    Fixed: 200,
-    Profit: 0,
-    NPS: Math.round(40 + Math.random() * 20), // 40-60
-    Virality: 0.1 + Math.random() * 0.2, // 0.1-0.3
-    Traffic: Math.round(100 + Math.random() * 50), // 100-150
-    OpEx: 200 + Math.round(Math.random() * 100), // 200-300
+    AvPrice: 40,
+    COGS: 30,
+    C1: 20, // %
+    Users: 500,
+    CPUser: 25,
+    FixCosts: 3000,
+    Margin: 0.25,
+    AMPPU: 10,
+    AMPU: 2,
+    Profit: 1000,
+    ProfitNet: -19000,
   };
 }
-const INIT_METRICS = getRandomInitMetrics();
 
-type Metrics = ReturnType<typeof getRandomInitMetrics>;
-const INITIATIVES: {
-  icon: string;
+type Metrics = ReturnType<typeof getInitialMetrics>;
+
+type Initiative = {
   title: string;
   description: string;
-  apply: (m: Metrics) => Partial<Metrics>;
-  feedback: string;
-  risk?: { chance: number; effect: (m: Metrics) => Partial<Metrics>; message: string; condition?: (m: Metrics) => boolean };
-}[] = [
-  // Маркетинг
-  {
-    icon: '🔎',
-    title: 'Контекстная реклама в Google Ads',
-    description: 'CAC -$10, Конверсия +2%. Риск: При NPS < 50 → CAC +$15 (пользователи жалуются на навязчивость).',
-    apply: m => ({ CAC: Math.max(m.CAC - 10, 0), Conversion: Math.min(m.Conversion + 2, 100) }),
-    feedback: 'Реклама привела новых клиентов, но есть риск негатива.',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ CAC: m.CAC + 15 }),
-      message: 'Пользователи жалуются на навязчивую рекламу — CAC вырос!',
-      condition: m => m.NPS < 50
-    }
-  },
-  {
-    icon: '📢',
-    title: 'Таргетированная рассылка в соцсетях',
-    description: 'Конверсия +3%, Virality +0.1. Риск: При Retention < 50% → NPS -7.',
-    apply: m => ({ Conversion: Math.min(m.Conversion + 3, 100), Virality: m.Virality + 0.1 }),
-    feedback: 'Рассылка сработала, но есть риск негатива.',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ NPS: m.NPS - 7 }),
-      message: 'Пользователи считают рассылку спамом — NPS снизился!',
-      condition: m => m.Retention < 50
-    }
-  },
-  {
-    icon: '🤝',
-    title: 'Коллаборация с микроблогером',
-    description: 'Трафик +20%, LTV +$10. Риск: Если блогер теряет популярность → Трафик -30%.',
-    apply: m => ({ Traffic: m.Traffic + 20, LTV: m.LTV + 10 }),
-    feedback: 'Блогер привёл новую аудиторию!',
-    risk: {
-      chance: 0.15,
-      effect: m => ({ Traffic: Math.max(m.Traffic - 30, 0) }),
-      message: 'Блогер потерял популярность — трафик упал!',
-      condition: m => true
-    }
-  },
-  // Продукт
-  {
-    icon: '✨',
-    title: 'Добавление новой функции',
-    description: 'Retention +8%, LTV +$15. Риск: 25% шанс, что функция багнутая → NPS -10, OpEx +$100.',
-    apply: m => ({ Retention: Math.min(m.Retention + 8, 100), LTV: m.LTV + 15 }),
-    feedback: 'Новая функция понравилась клиентам!',
-    risk: {
-      chance: 0.25,
-      effect: m => ({ NPS: m.NPS - 10, OpEx: m.OpEx + 100 }),
-      message: 'Функция оказалась с багами — NPS и OpEx пострадали.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '🚀',
-    title: 'Упрощение onboarding',
-    description: 'Конверсия +5%, Retention +5%. Риск: При частых изменениях → NPS -5.',
-    apply: m => ({ Conversion: Math.min(m.Conversion + 5, 100), Retention: Math.min(m.Retention + 5, 100) }),
-    feedback: 'Onboarding стал проще!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ NPS: m.NPS - 5 }),
-      message: 'Клиенты теряются из-за частых изменений — NPS снизился.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '💳',
-    title: 'Ввод платной подписки',
-    description: 'LTV +$25, Конверсия -3%. Риск: Если LTV > $150 → Конверсия +2%.',
-    apply: m => ({ LTV: m.LTV + 25, Conversion: Math.max(m.Conversion - 3, 0) }),
-    feedback: 'Платная подписка увеличила LTV, но часть клиентов ушла.',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ Conversion: m.Conversion + 2 }),
-      message: 'Премиум-статус привлёк новых клиентов!',
-      condition: m => m.LTV > 150
-    }
-  },
-  // Поддержка клиентов
-  {
-    icon: '💬',
-    title: 'Круглосуточный чат с поддержкой',
-    description: 'NPS +10, Retention +7%. Риск: OpEx +$120/мес.',
-    apply: m => ({ NPS: m.NPS + 10, Retention: Math.min(m.Retention + 7, 100) }),
-    feedback: 'Поддержка стала лучше, клиенты довольны!',
-    risk: {
-      effect: m => ({ OpEx: m.OpEx + 120 }),
-      message: 'Затраты на поддержку выросли (OpEx)!',
-      chance: 1,
-      condition: m => true
-    }
-  },
-  {
-    icon: '🤖',
-    title: 'Внедрение AI-помощника',
-    description: 'OpEx -$50, NPS +5. Риск: 20% шанс, что AI ошибается → NPS -15.',
-    apply: m => ({ OpEx: Math.max(m.OpEx - 50, 0), NPS: m.NPS + 5 }),
-    feedback: 'AI-помощник снизил затраты и повысил NPS!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ NPS: m.NPS - 15 }),
-      message: 'AI дал некорректные ответы — NPS снизился.',
-      condition: m => true
-    }
-  },
-  // Партнерства
-  {
-    icon: '🔗',
-    title: 'Интеграция с популярным сервисом',
-    description: 'Трафик +40%, LTV +$20. Риск: Если сервис меняет политику → Трафик -50%.',
-    apply: m => ({ Traffic: m.Traffic + 40, LTV: m.LTV + 20 }),
-    feedback: 'Интеграция дала мощный прирост!',
-    risk: {
-      chance: 0.15,
-      effect: m => ({ Traffic: Math.max(m.Traffic - 50, 0) }),
-      message: 'Сервис изменил политику — трафик упал.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '🎉',
-    title: 'Совместная акция с брендом',
-    description: 'CAC -$15, Virality +0.2. Риск: При несовпадении ЦА → Конверсия -4%.',
-    apply: m => ({ CAC: Math.max(m.CAC - 15, 0), Virality: m.Virality + 0.2 }),
-    feedback: 'Акция с брендом повысила узнаваемость!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ Conversion: Math.max(m.Conversion - 4, 0) }),
-      message: 'Целевая аудитория не совпала — конверсия упала.',
-      condition: m => true
-    }
-  },
-  // Операции
-  {
-    icon: '📊',
-    title: 'Автоматизация отчетности',
-    description: 'OpEx -$30, Конверсия +1%. Риск: При сбое → Конверсия -3%.',
-    apply: m => ({ OpEx: Math.max(m.OpEx - 30, 0), Conversion: Math.min(m.Conversion + 1, 100) }),
-    feedback: 'Автоматизация ускорила аналитику!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ Conversion: Math.max(m.Conversion - 3, 0) }),
-      message: 'Сбой автоматизации — конверсия упала.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '☁️',
-    title: 'Переход на облачные серверы',
-    description: 'OpEx -$40, NPS +3. Риск: 10% шанс на сбой → NPS -10.',
-    apply: m => ({ OpEx: Math.max(m.OpEx - 40, 0), NPS: m.NPS + 3 }),
-    feedback: 'Сервера стали быстрее и дешевле!',
-    risk: {
-      chance: 0.1,
-      effect: m => ({ NPS: m.NPS - 10 }),
-      message: 'Технический сбой — NPS снизился.',
-      condition: m => true
-    }
-  },
-  // Лояльность
-  {
-    icon: '💰',
-    title: 'Система кэшбэка',
-    description: 'Retention +10%, LTV +$10. Риск: При высокой конкуренции → CAC +$10.',
-    apply: m => ({ Retention: Math.min(m.Retention + 10, 100), LTV: m.LTV + 10 }),
-    feedback: 'Кэшбэк повысил лояльность!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ CAC: m.CAC + 10 }),
-      message: 'Конкуренты вынудили увеличить CAC.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '🎟️',
-    title: 'Эксклюзивные мероприятия для клиентов',
-    description: 'NPS +12, Virality +0.3. Риск: OpEx +$200.',
-    apply: m => ({ NPS: m.NPS + 12, Virality: m.Virality + 0.3 }),
-    feedback: 'Мероприятия повысили лояльность и виральность!',
-    risk: {
-      effect: m => ({ OpEx: m.OpEx + 200 }),
-      message: 'Организация мероприятий увеличила OpEx.',
-      chance: 1,
-      condition: m => true
-    }
-  },
-  // Аналитика
-  {
-    icon: '🔬',
-    title: 'Глубокий анализ данных о клиентах',
-    description: 'Конверсия +4%, LTV +$10. Риск: При утечке данных → NPS -20, OpEx +$150.',
-    apply: m => ({ Conversion: Math.min(m.Conversion + 4, 100), LTV: m.LTV + 10 }),
-    feedback: 'Аналитика помогла понять клиентов!',
-    risk: {
-      chance: 0.15,
-      effect: m => ({ NPS: m.NPS - 20, OpEx: m.OpEx + 150 }),
-      message: 'Утечка данных — штрафы и падение NPS.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '📈',
-    title: 'Прогнозирование спроса',
-    description: 'CAC -$5, Retention +5%. Риск: При ошибке прогноза → LTV -$10.',
-    apply: m => ({ CAC: Math.max(m.CAC - 5, 0), Retention: Math.min(m.Retention + 5, 100) }),
-    feedback: 'Прогноз оказался точным!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ LTV: Math.max(m.LTV - 10, 0) }),
-      message: 'Ошибка прогноза — LTV снизился.',
-      condition: m => true
-    }
-  },
-  // Внешние факторы
-  {
-    icon: '🏆',
-    title: 'Участие в отраслевой конференции',
-    description: 'Трафик +25%, LTV +$15. Риск: 30% шанс провала → Трафик -10%.',
-    apply: m => ({ Traffic: m.Traffic + 25, LTV: m.LTV + 15 }),
-    feedback: 'Конференция дала новых клиентов!',
-    risk: {
-      chance: 0.3,
-      effect: m => ({ Traffic: Math.max(m.Traffic - 10, 0) }),
-      message: 'Мероприятие провалилось — трафик упал.',
-      condition: m => true
-    }
-  },
-  {
-    icon: '🛍️',
-    title: 'Сезонная распродажа',
-    description: 'Конверсия +6%, LTV -$10. Риск: При низком NPS → Retention -8%.',
-    apply: m => ({ Conversion: Math.min(m.Conversion + 6, 100), LTV: Math.max(m.LTV - 10, 0) }),
-    feedback: 'Скидки увеличили продажи!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ Retention: Math.max(m.Retention - 8, 0) }),
-      message: 'Низкий NPS — удержание снизилось.',
-      condition: m => m.NPS < 50
-    }
-  },
-  // HR-стратегии
-  {
-    icon: '🎓',
-    title: 'Обучение сотрудников',
-    description: 'NPS +7, Retention +5%. Риск: OpEx +$80.',
-    apply: m => ({ NPS: m.NPS + 7, Retention: Math.min(m.Retention + 5, 100) }),
-    feedback: 'Команда стала сильнее!',
-    risk: {
-      effect: m => ({ OpEx: m.OpEx + 80 }),
-      message: 'Обучение стоит денег — OpEx вырос.',
-      chance: 1,
-      condition: m => true
-    }
-  },
-  {
-    icon: '🧑‍💻',
-    title: 'Аутсорсинг поддержки',
-    description: 'OpEx -$60. Риск: NPS -10 (низкое качество услуг).',
-    apply: m => ({ OpEx: Math.max(m.OpEx - 60, 0) }),
-    feedback: 'Затраты на поддержку снижены!',
-    risk: {
-      chance: 0.2,
-      effect: m => ({ NPS: m.NPS - 10 }),
-      message: 'Качество поддержки упало — NPS снизился.',
-      condition: m => true
-    }
-  },
+  apply: (m: Metrics) => Metrics;
+  successChance: number;
+  partialEffect?: (m: Metrics) => Metrics;
+  risk?: { chance: number; effect: (m: Metrics) => Metrics; message: string };
+};
+
+type Department = 'acquisition' | 'product' | 'onboarding' | 'admin';
+
+const DEPARTMENTS: { key: Department; label: string; icon: string; desc: string }[] = [
+  { key: 'acquisition', label: 'Привлечение', icon: '📈', desc: 'Влияет на: Users, C1, CPUser. Основные задачи: снижение CPUser, повышение релевантности трафика.' },
+  { key: 'product', label: 'Продукт', icon: '🛠️', desc: 'Влияет на: AvPrice, COGS. Основные задачи: увеличение ценности продукта, снижение себестоимости.' },
+  { key: 'onboarding', label: 'Онбординг', icon: '🎓', desc: 'Влияет на: C1. Основные задачи: улучшение конверсии через адаптацию клиентов.' },
+  { key: 'admin', label: 'Админ', icon: '🏢', desc: 'Влияет на: FixCosts. Основные задачи: оптимизация постоянных расходов.' },
 ];
 
-function getRandomInitiatives() {
-  const shuffled = INITIATIVES.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, 3);
+const INITIATIVES: Record<Department, Initiative[]> = {
+  acquisition: [
+    { title: 'Запуск SEO-кампании', description: 'CPUser → 0, Users +500', apply: m => recalcMetrics({ ...m, CPUser: 0, Users: m.Users + Math.floor(300 + Math.random() * 400) }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + Math.random() * 200) }), risk: { chance: 0.25, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(100 + Math.random() * 200) }), message: 'Задержка на 2 хода — Users -100-300.' } },
+    { title: 'Таргетированная реклама', description: 'C1 +10%, Users +300', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4), Users: m.Users + Math.floor(200 + Math.random() * 200) }), successChance: 0.8, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(50 + Math.random() * 100) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 3) }), message: 'CPUser +$2-5 (нерелевантный трафик).' } },
+    { title: 'Партнерство с блогером', description: 'Users +600, C1 -5%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(400 + Math.random() * 400), C1: m.C1 - Math.floor(3 + Math.random() * 4) }), successChance: 0.6, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + Math.random() * 200) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(200 + Math.random() * 300) }), message: 'При низком NPS → Users -200-500.' } },
+    { title: 'A/B тесты лендинга', description: 'C1 +15%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(12 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 4) }), message: 'Провал теста → C1 -4-8%.' } },
+    { title: 'Реферальная программа', description: 'Users +200, COGS +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(150 + Math.random() * 100), COGS: m.COGS + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'Бонусы за рефералов увеличили COGS.' } },
+    { title: 'Контекстная реклама', description: 'Users +500, CPUser +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(400 + Math.random() * 200), CPUser: m.CPUser + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Высокая конкуренция → C1 -4-7%.' } },
+    { title: 'Вебинары для ЦА', description: 'C1 +12%, Users +100, FixCosts +$800', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10 + Math.random() * 4), Users: m.Users + Math.floor(80 + Math.random() * 40), FixCosts: m.FixCosts + Math.floor(600 + Math.random() * 400) }), successChance: 0.7 },
+    { title: 'Покупка лидов', description: 'Users +800, C1 -15%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(600 + Math.random() * 400), C1: m.C1 - Math.floor(12 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 2) }), message: 'Риск спама → CPUser +$2-4.' } },
+    { title: 'Email-маркетинг', description: 'Users +200, C1 +8%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(150 + Math.random() * 100), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Частые рассылки → C1 -4-7%.' } },
+    { title: 'Создание контента', description: 'Users +300 (SEO-трафик)', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(200 + Math.random() * 200) }), successChance: 0.7 },
+  ],
+  product: [
+    { title: 'Внедрение ИИ-оптимизации', description: 'COGS -$4, AvPrice +$10', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(3 + Math.random() * 2), AvPrice: m.AvPrice + Math.floor(8 + Math.random() * 4) }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(1 + Math.random() * 2) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2) }), message: 'Технический сбой → COGS +$2-4.' } },
+    { title: 'Премиум-подписка', description: 'AvPrice +$25, C1 -6%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(20 + Math.random() * 10), C1: m.C1 - Math.floor(4 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(80 + Math.random() * 40) }), message: 'Низкий NPS → Users -80-120.' } },
+    { title: 'Автоматизация поддержки', description: 'COGS -$3, C1 +5%', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(2 + Math.random() * 2), C1: m.C1 + Math.floor(4 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -7 (робот не справляется).' } },
+    { title: 'Новая фича "Аналитика"', description: 'AvPrice +$20, C1 +8%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(15 + Math.random() * 10), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(4 + Math.random() * 2) }), message: 'Задержка релиза → COGS +$4-6.' } },
+    { title: 'Партнерство с облачным провайдером', description: 'COGS -$5', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(4 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(150 + Math.random() * 100) }), message: 'Риск зависимости → FixCosts +$150-250.' } },
+    { title: 'Улучшение UI/UX', description: 'C1 +10%, AvPrice +$8', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4), AvPrice: m.AvPrice + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(3 + Math.random() * 3) }), message: 'Ошибки → C1 -3-6%.' } },
+    { title: 'Геймификация сервиса', description: 'COGS +$3, C1 +7%', apply: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2), C1: m.C1 + Math.floor(5 + Math.random() * 4) }), successChance: 0.7 },
+    { title: 'Снижение тарифов для новых', description: 'Users +400, AvPrice -$8', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(300 + Math.random() * 200), AvPrice: m.AvPrice - Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Margin: m.Margin - (0.06 + Math.random() * 0.04) }), message: 'Margin падает на 6-10%.' } },
+    { title: 'Интеграция с умным домом', description: 'AvPrice +$30', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(25 + Math.random() * 10) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(3 + Math.random() * 2) }), message: 'Технические баги → COGS +$3-5.' } },
+    { title: 'Оптимизация серверов', description: 'COGS -$6', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(5 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -10.' } },
+  ],
+  onboarding: [
+    { title: 'Персонализация приветствия', description: 'C1 +12%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10 + Math.random() * 4) }), successChance: 0.8, partialEffect: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(4 + Math.random() * 3) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Ошибки данных → C1 -4-7%.' } },
+    { title: 'Чек-листы для новичков', description: 'C1 +10%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(2 + Math.random() * 2) }), message: 'Слишком сложно → C1 -2-4%.' } },
+    { title: 'Бесплатный пробный период', description: 'C1 +15%, Users +200, COGS +$3', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(12 + Math.random() * 6), Users: m.Users + Math.floor(150 + Math.random() * 100), COGS: m.COGS + Math.floor(2 + Math.random() * 2) }), successChance: 0.7 },
+    { title: 'Геймификация обучения', description: 'C1 +12%, FixCosts +$500', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10 + Math.random() * 4), FixCosts: m.FixCosts + Math.floor(400 + Math.random() * 200) }), successChance: 0.7 },
+    { title: 'Обратная связь от клиентов', description: 'C1 +8%, AvPrice +$5', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(6 + Math.random() * 4), AvPrice: m.AvPrice + Math.floor(4 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(3 + Math.random() * 3) }), message: 'Негативные отзывы → C1 -3-6%.' } },
+    { title: 'Видео-инструкции', description: 'C1 +7%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(5 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(1 + Math.random() * 2) }), message: 'Низкое качество → C1 -1-3%.' } },
+    { title: 'Сегментация аудитории', description: 'C1 +14%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(11 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(5 + Math.random() * 3) }), message: 'Ошибка сегментации → C1 -5-8%.' } },
+    { title: 'Push-уведомления', description: 'C1 +8%, Users +100', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(6 + Math.random() * 4), Users: m.Users + Math.floor(80 + Math.random() * 40) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(6 + Math.random() * 3) }), message: 'Спам → C1 -6-9%.' } },
+    { title: 'Чат-поддержка 24/7', description: 'C1 +15%, FixCosts +$600', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(12 + Math.random() * 6), FixCosts: m.FixCosts + Math.floor(500 + Math.random() * 200) }), successChance: 0.7 },
+    { title: 'Аналитика поведения', description: 'C1 +10%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'Утечка данных → NPS -15.' } },
+  ],
+  admin: [
+    { title: 'Аутсорсинг бухгалтерии', description: 'FixCosts -$800', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(600 + Math.random() * 400) }), successChance: 0.85, partialEffect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(200 + Math.random() * 100) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(800 + Math.random() * 400) }), message: 'Риск ошибок → Штраф $800-1200.' } },
+    { title: 'Переезд в коворкинг', description: 'FixCosts -$500', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(400 + Math.random() * 200) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(2 + Math.random() * 2) }), message: 'Снижение мотивации → C1 -2-4%.' } },
+    { title: 'Автоматизация отчетов', description: 'FixCosts -$300', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(250 + Math.random() * 100) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(80 + Math.random() * 40) }), message: 'Сбои в данных → FixCosts +$80-120.' } },
+    { title: 'Сокращение штата', description: 'FixCosts -$1000', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(800 + Math.random() * 400) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -10 (перегрузка сотрудников).' } },
+    { title: 'Оптимизация облачных услуг', description: 'FixCosts -$600', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(500 + Math.random() * 200) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2) }), message: 'Риск простоя → COGS +$2-4.' } },
+    { title: 'Долгосрочные контракты', description: 'FixCosts -$400', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(300 + Math.random() * 200) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(400 + Math.random() * 200) }), message: 'Штрафы при расторжении → $400-600.' } },
+    { title: 'Энергосберегающие технологии', description: 'FixCosts -$250', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(200 + Math.random() * 100) }), successChance: 0.7 },
+    { title: 'Продажа оборудования', description: 'FixCosts -$1200', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(1000 + Math.random() * 400) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(4 + Math.random() * 2) }), message: 'Потеря мощности → COGS +$4-6.' } },
+    { title: 'Обучение сотрудников', description: 'FixCosts +$300, C1 +8%', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(250 + Math.random() * 100), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(250 + Math.random() * 100) }), message: 'Увольнения → FixCosts +$250-350.' } },
+    { title: 'Страхование рисков', description: 'FixCosts +$150', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(120 + Math.random() * 60) }), successChance: 0.7 },
+  ],
+};
+
+function recalcMetrics(m: Metrics): Metrics {
+  const Margin = (m.AvPrice - m.COGS) / m.AvPrice;
+  const AMPPU = m.AvPrice - m.COGS;
+  const AMPU = AMPPU * (m.C1 / 100);
+  const Profit = (AMPU - m.CPUser) * m.Users;  // Изменено: теперь учитываем CPUser в расчете прибыли
+  const ProfitNet = Profit - m.FixCosts;
+  return { ...m, Margin, AMPPU, AMPU, Profit, ProfitNet };
 }
 
-function UnitQuestGame({ onExit, showLegend, setShowLegend, turn, setTurn, metrics, setMetrics, profitHistory, setProfitHistory, achievements, setAchievements, message, setMessage, gameOver, setGameOver, win, setWin, initiatives, setInitiatives, lastDelta, setLastDelta, lastOldMetrics, setLastOldMetrics }: {
-  onExit: () => void;
-  showLegend: boolean;
-  setShowLegend: (v: boolean) => void;
-  turn: number;
-  setTurn: (v: number) => void;
-  metrics: Metrics;
-  setMetrics: (v: Metrics) => void;
-  profitHistory: number[];
-  setProfitHistory: (v: number[]) => void;
-  achievements: string[];
-  setAchievements: (v: string[]) => void;
-  message: string | null;
-  setMessage: (v: string | null) => void;
-  gameOver: boolean;
-  setGameOver: (v: boolean) => void;
-  win: boolean;
-  setWin: (v: boolean) => void;
-  initiatives: { icon: string; title: string; description: string; apply: (m: Metrics) => Partial<Metrics>; feedback: string; risk?: { chance: number; effect: (m: Metrics) => Partial<Metrics>; message: string } }[];
-  setInitiatives: (v: { icon: string; title: string; description: string; apply: (m: Metrics) => Partial<Metrics>; feedback: string; risk?: { chance: number; effect: (m: Metrics) => Partial<Metrics>; message: string } }[]) => void;
-  lastDelta: Partial<Metrics> | null;
-  setLastDelta: (v: Partial<Metrics> | null) => void;
-  lastOldMetrics: Metrics | null;
-  setLastOldMetrics: (v: Metrics | null) => void;
-}) {
-  // Все хуки только на верхнем уровне!
-  const [showFirework, setShowFirework] = useState(false);
-  const mainRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (mainRef.current) {
-      mainRef.current.style.opacity = '0';
-      mainRef.current.style.transform = 'translateY(24px)';
-      setTimeout(() => {
-        if (mainRef.current) {
-          mainRef.current.style.opacity = '1';
-          mainRef.current.style.transform = 'translateY(0)';
-        }
-      }, 30);
-    }
-  }, [showLegend, turn]);
-  React.useEffect(() => {
-    const ach: string[] = [];
-    if (metrics.CAC <= 30) ach.push('Эффективный маркетолог');
-    if (metrics.Retention >= 80) ach.push('Мастер удержания');
-    if (metrics.LTV >= 150) ach.push('Гуру LTV');
-    setAchievements(Array.from(new Set(ach)));
-  }, [metrics]);
+type OnboardingStep = {
+  title: string;
+  content: React.ReactNode;
+};
 
-  // Условный рендер только после всех хуков!
-  if (showLegend) {
-    return (
-      <section style={{ background: '#fff', borderRadius: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e5e5e7', padding: 56, marginBottom: 48, marginTop: 0, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', fontFamily: 'SF Pro Display, Helvetica Neue, Arial, sans-serif', display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center', ...fadeStyle }}>
-        <div style={{ fontWeight: 700, fontSize: 32, color: '#111', letterSpacing: -1, marginBottom: 0, lineHeight: 1.1 }}>Unit Quest: Битва за прибыль</div>
-        <div style={{ fontSize: 20, color: '#222', fontWeight: 400, marginBottom: 0, lineHeight: 1.5, maxWidth: 520 }}>
-          <b>Вы — основатель стартапа, развиваете цифровой продукт.</b> Ваша цель — достичь прибыли <b>$200&nbsp;000</b> за 10 месяцев, балансируя метрики юнит-экономики.<br /><br />
-          <b>Как играть:</b>
-          <ul style={{ margin: '16px 0 0 18px', color: '#444', fontSize: 18, lineHeight: 1.5 }}>
-            <li>В начале игры стартовые метрики случайны — каждый раз новый вызов!</li>
-            <li>В каждом ходу выберите одну из 3 инициатив, чтобы повлиять на метрики.</li>
-            <li>Следите за CAC, LTV, Retention, Conversion, Клиентами, Бюджетом и Прибылью.</li>
-            <li>Ваша задача — к 10-му ходу получить прибыль не менее $200&nbsp;000.</li>
-            <li>Некоторые инициативы имеют риск — будьте внимательны!</li>
-            <li>После изучения легенды нажмите «Начать игру».</li>
+const ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    title: "AI Assistant Empire: Восхождение к прибыли",
+    content: (
+      <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+        <p>Вы — CEO стартапа FutureMind, который создает умных ИИ-ассистентов нового поколения.</p>
+        <p>Ваш продукт — VirtuMate — это не просто алгоритм, а цифровой компаньон, который:</p>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          <li>📅 Планирует дела, бронирует рестораны и напоминает о днях рождения.</li>
+          <li>🛒 Автоматизирует покупки, находя лучшие цены и экономя время клиентов.</li>
+          <li>🎓 Обучает новым навыкам: от кулинарных рецептов до основ программирования.</li>
+        </ul>
+        <p style={{ fontStyle: 'italic', marginTop: 16 }}>Но VirtuMate пока лишь тень того, чем он может стать. Ваш стартап балансирует на грани провала, и только ваши решения определят, превратится ли он в многомиллионную империю или канет в безвестность...</p>
+      </div>
+    )
+  },
+  {
+    title: "Проблемы стартапа",
+    content: (
+      <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+        <p style={{ fontWeight: 600, marginBottom: 16 }}>Темные тучи над FutureMind:</p>
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>💸 Дырявый кошелек: Каждый клиент приносит убытки.</p>
+          <p>Почему? Инфраструктура «съедает» деньги (COGS = $15 при цене подписки $20).</p>
+          <p>Результат: AMPU = -$3 (вы платите за каждого пользователя, а не зарабатываете!).</p>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>🕳 Пустыня клиентов: Всего 500 подписчиков — капля в море рынка.</p>
+          <p>Почему? Реклама бьет мимо цели, а сайт отпугивает сложным интерфейсом.</p>
+        </div>
+        <div>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>⚔️ Конкуренты наступают:</p>
+          <p>Корпорации вроде NeuroTech уже тестируют своих ИИ-ассистентов. Через 15 месяцев они захватят рынок… если вы не успеете.</p>
+        </div>
+      </div>
+    )
+  },
+  {
+    title: "Ваша миссия",
+    content: (
+      <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+        <p style={{ marginBottom: 16 }}>За 15 месяцев (ходов) превратите FutureMind в прибыльную компанию с ежемесячным доходом ≥ $50,000.</p>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          <li style={{ marginBottom: 12 }}>🔥 <b>Сожгите убытки:</b> Сделайте AMPU положительным, перехитрив алгоритмы конкурентов.</li>
+          <li style={{ marginBottom: 12 }}>🚀 <b>Покорите аудиторию:</b> Привлеките десятки тысяч пользователей, сделав VirtuMate незаменимым.</li>
+          <li>💎 <b>Создайте легенду:</b> Войдите в историю как CEO, который перевернул рынок ИИ!</li>
+        </ul>
+        <div style={{ marginTop: 16, padding: 16, background: '#f8fafc', borderRadius: 8 }}>
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>Это не игра в калькулятор. Это битва за выживание:</p>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li>🎲 Каждый квартал — мини-эпизод драмы: тесты, прорывы, провалы.</li>
+            <li>⚡ Риски на каждом шагу и моменты триумфа.</li>
+            <li>⏳ Гонка со временем до захвата рынка гигантами.</li>
           </ul>
         </div>
-        <button onClick={() => setShowLegend(false)} style={{ padding: '16px 40px', background: 'linear-gradient(90deg,#00b8ff,#7800ff 100%)', color: '#fff', fontWeight: 700, fontSize: 20, border: 'none', borderRadius: 16, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,184,255,0.10)', transition: 'background 0.2s', marginTop: 24, willChange: 'transform' }}
-          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-          onMouseUp={e => e.currentTarget.style.transform = ''}
-          onMouseLeave={e => e.currentTarget.style.transform = ''}
-        >Начать игру</button>
-      </section>
-    );
+      </div>
+    )
+  },
+  {
+    title: "Стартовые условия",
+    content: (
+      <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+        <p style={{ fontWeight: 600, marginBottom: 16 }}>Вы начинаете здесь:</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <div>
+            <p>🏚️ <b>Офис:</b></p>
+            <p>Гараж с серверами, которые греются как тостеры.</p>
+          </div>
+          <div>
+            <p>👥 <b>Команда:</b></p>
+            <p>5 энтузиастов-разработчиков и маркетолог-студент.</p>
+          </div>
+          <div>
+            <p>💰 <b>Бюджет:</b></p>
+            <p>$30,000 (последние деньги инвесторов).</p>
+          </div>
+          <div>
+            <p>📊 <b>Метрики:</b></p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              <li>Users = 500</li>
+              <li>AvPrice = $40</li>
+              <li>COGS = $30</li>
+              <li>AMPU = $2</li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8, marginBottom: 16 }}>
+          <p style={{ fontWeight: 600, color: '#0369a1' }}>🌟 Сценарий успеха:</p>
+          <p>«VirtuMate стал новым iPhone в мире ИИ. Вы продали компанию за $1 млрд и запускаете ракету к Марсу!»</p>
+        </div>
+        <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
+          <p style={{ fontWeight: 600, color: '#dc2626' }}>💀 Сценарий провала:</p>
+          <p>«FutureMind куплен NeuroTech за $1. Ваше имя стало синонимом провала в Кремниевой долине…»</p>
+        </div>
+      </div>
+    )
   }
+];
 
-  const [metricsHistory, setMetricsHistory] = React.useState<Metrics[]>([]);
-  const [riskFails, setRiskFails] = React.useState(0);
-  const [abTests, setAbTests] = React.useState(0);
-  const [partnerships, setPartnerships] = React.useState(0);
-  const [viralityClients, setViralityClients] = React.useState(0);
-  const [supportUpgrades, setSupportUpgrades] = React.useState(0);
-  const [opexLowStreak, setOpexLowStreak] = React.useState(0);
+function VictoryFireworks() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fireworksRef = useRef<Fireworks | null>(null);
 
-  function checkAchievements(metrics: Metrics) {
-    const params = {
-      metrics,
-      history: metricsHistory,
-      riskFails,
-      abTests,
-      partnerships,
-      viralityClients,
-      supportUpgrades,
-      opexLowStreak,
-    };
-    const newAch = [...achievements];
-    for (const ach of ACHIEVEMENTS_EXT) {
-      if (!newAch.includes(ach.label) && ach.check(params)) {
-        newAch.push(ach.label);
-      }
-    }
-    setAchievements(Array.from(new Set(newAch)));
-  }
-
-  function handleInitiative(idx: number) {
-    if (gameOver) return;
-    let m = { ...metrics };
-    const ini = initiatives[idx];
-    setLastOldMetrics({ ...metrics });
-    // Применяем эффект
-    m = { ...m, ...ini.apply(m) };
-    let feedback = ini.feedback;
-    let riskTriggered = false;
-    // Риск
-    if (ini.risk && ('condition' in ini.risk ? typeof ini.risk.condition === 'function' ? ini.risk.condition(m) : true : true)) {
-      if (Math.random() < ini.risk.chance) {
-        m = { ...m, ...ini.risk.effect(m) };
-        feedback = ini.risk.message;
-        riskTriggered = true;
-      }
-    }
-    // Считаем дельту метрик
-    const delta: Partial<Metrics> = {};
-    (['CAC', 'LTV', 'Retention', 'Conversion', 'Clients', 'Budget', 'Fixed', 'Profit', 'NPS', 'Virality', 'Traffic', 'OpEx'] as const).forEach(key => {
-      if (metrics[key] !== m[key]) delta[key] = m[key];
-    });
-    setLastDelta(delta);
-    // Формулы расчёта
-    // Новые клиенты
-    const newClients = Math.floor((m.Budget / (m.CAC || 1)) * (m.Conversion / 100));
-    m.Clients = Math.max(m.Clients + newClients, 0);
-    // Virality клиентов
-    if (m.Virality > 0) {
-      setViralityClients(v => v + Math.floor(newClients * m.Virality));
-    }
-    // LTV (оставляем как есть, можно усложнить)
-    // Retention (оставляем как есть)
-    // Прибыль за месяц
-    m.Profit = (m.LTV - m.CAC) * m.Clients - m.Fixed - m.OpEx;
-    m.Budget = m.Budget + m.Profit - m.Fixed - m.OpEx;
-
-    // Счётчики для ачивок
-    // 1. riskFails
-    if (riskTriggered && feedback && feedback.toLowerCase().includes('упал') || feedback.toLowerCase().includes('снизился') || feedback.toLowerCase().includes('штраф') || feedback.toLowerCase().includes('сбой') || feedback.toLowerCase().includes('потеря')) {
-      setRiskFails(r => r + 1);
-    }
-    // 2. abTests (каждое изменение Conversion)
-    if (delta.Conversion !== undefined && delta.Conversion > metrics.Conversion) {
-      setAbTests(a => a + 1);
-    }
-    // 3. partnerships (по ключевым словам в title)
-    if (/партнер|партнёр|интеграция|коллаб|акция|бренд/i.test(ini.title)) {
-      setPartnerships(p => p + 1);
-    }
-    // 4. supportUpgrades (по ключевым словам в title)
-    if (/поддержк|чат|ai|помощник|аутсорсинг/i.test(ini.title)) {
-      setSupportUpgrades(s => s + 1);
-    }
-    // 5. opexLowStreak
-    if (m.OpEx <= 100) {
-      setOpexLowStreak(s => s + 1);
-    } else {
-      setOpexLowStreak(0);
-    }
-
-    // Проверка победы/поражения
-    let over = false, win = false;
-    if (m.Budget < 0) {
-      over = true;
-      setMessage('Бюджет ушёл в минус. Игра окончена!');
-    } else if (turn === MAX_TURNS && m.Profit >= WIN_PROFIT) {
-      over = true; win = true;
-      setMessage('Поздравляем! Вы достигли цели по прибыли!');
-      import('canvas-confetti').then(confetti => {
-        confetti.default({
-          particleCount: 120,
-          spread: 90,
-          origin: { y: 0.7 },
-          zIndex: 9999
-        });
+  useEffect(() => {
+    if (containerRef.current && !fireworksRef.current) {
+      fireworksRef.current = new Fireworks(containerRef.current, {
+        autoresize: true,
+        opacity: 0.5,
+        acceleration: 1.05,
+        friction: 0.97,
+        gravity: 1.5,
+        particles: 50,
+        traceLength: 3,
+        traceSpeed: 10,
+        explosion: 5,
+        intensity: 30,
+        flickering: 50,
+        lineStyle: 'round',
+        hue: {
+          min: 0,
+          max: 360
+        },
+        delay: {
+          min: 30,
+          max: 60
+        },
+        rocketsPoint: {
+          min: 50,
+          max: 50
+        },
+        lineWidth: {
+          explosion: {
+            min: 1,
+            max: 3
+          },
+          trace: {
+            min: 1,
+            max: 2
+          }
+        },
+        brightness: {
+          min: 50,
+          max: 80
+        },
+        decay: {
+          min: 0.015,
+          max: 0.03
+        }
       });
-    } else if (turn === MAX_TURNS) {
-      over = true;
-      setMessage('Цель не достигнута за 10 ходов. Попробуйте ещё раз!');
-    } else {
-      setMessage(feedback);
+      fireworksRef.current.start();
     }
 
-    setMetrics(m);
-    setProfitHistory([...profitHistory, m.Profit]);
-    setGameOver(over);
-    setWin(win);
-    if (!over) setTurn(turn + 1);
-    setInitiatives(getRandomInitiatives());
-    setMetricsHistory([...metricsHistory, m]);
-    checkAchievements(m);
-  }
-
-  // График прибыли
-  function ProfitChart() {
-    const W = 420, H = 120, pad = 36;
-    const data = profitHistory.map((y, i) => ({ x: i, y }));
-    let minY = Math.min(...profitHistory, 0, WIN_PROFIT);
-    let maxY = Math.max(...profitHistory, 0, WIN_PROFIT);
-    if (minY === maxY) {
-      minY -= 100;
-      maxY += 100;
-    }
-    const scaleX = (x: number) => pad + (x / MAX_TURNS) * (W - 2 * pad);
-    const scaleY = (y: number) => H - pad - ((y - minY) / (maxY - minY || 1)) * (H - 2 * pad);
-    const path = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${scaleX(d.x)},${scaleY(d.y)}`).join(' ');
-    return (
-      <div style={{ width: '100%', minWidth: 0, overflow: 'hidden', maxWidth: 420, margin: '0 auto' }}>
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#bbb" strokeWidth={1.5} />
-          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="#bbb" strokeWidth={1.5} />
-          <path d={path} fill="none" stroke="url(#grad)" strokeWidth={3} />
-          <defs>
-            <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#00b8ff" />
-              <stop offset="100%" stopColor="#7800ff" />
-            </linearGradient>
-          </defs>
-          {/* Целевая метрика */}
-          <line x1={pad} y1={scaleY(WIN_PROFIT)} x2={W - pad} y2={scaleY(WIN_PROFIT)} stroke="#00b8ff" strokeWidth={2} strokeDasharray="6 6" />
-          <text x={W - pad + 4} y={scaleY(WIN_PROFIT) + 4} fontSize={14} fill="#00b8ff" fontWeight={700}>Цель $200&nbsp;000</text>
-          {/* Подписи X */}
-          {[0, 2, 4, 6, 8, 10].map(x => (
-            <text key={x} x={scaleX(x)} y={H - pad + 22} fontSize={13} fill="#888" textAnchor="middle">{x}</text>
-          ))}
-          {/* Подписи Y */}
-          {[minY, 0, WIN_PROFIT].map(y => (
-            <text key={y} x={pad - 10} y={scaleY(y) + 5} fontSize={13} fill="#888" textAnchor="end">{formatNumber(Math.round(y))}</text>
-          ))}
-          <text x={W/2} y={H - 2} fontSize={14} fill="#0a2540" textAnchor="middle" fontWeight={600}>Ходы</text>
-          <text x={pad - 32} y={pad - 8} fontSize={14} fill="#0a2540" textAnchor="middle" fontWeight={600} transform={`rotate(-90,${pad - 32},${pad - 8})`}>Прибыль, $</text>
-        </svg>
-      </div>
-    );
-  }
-
-  const handleExit = () => {
-    setShowLegend(true);
-    setTurn(1);
-    setMetrics(getRandomInitMetrics());
-    setProfitHistory([0]);
-    setAchievements([]);
-    setMessage(null);
-    setGameOver(false);
-    setWin(false);
-    setInitiatives(getRandomInitiatives());
-    setLastDelta(null);
-    setLastOldMetrics(null);
-  };
-
-  return (
-    <section ref={mainRef} style={{ background: '#fff', borderRadius: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e5e5e7', padding: 56, marginBottom: 48, marginTop: 0, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', fontFamily: 'SF Pro Display, Helvetica Neue, Arial, sans-serif', display: 'flex', flexDirection: 'column', gap: 36, ...fadeStyle, position: 'relative', paddingTop: 110 }}>
-      <AchievementsFooter achievements={achievements} />
-      <div style={{ fontWeight: 700, fontSize: 32, color: '#111', letterSpacing: -1, marginBottom: 0, lineHeight: 1.1 }}>Unit Quest: Битва за прибыль</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {message && <div style={{ fontSize: 17, color: gameOver && !win ? '#ff3b30' : '#0a2540', background: '#f8f8fa', borderRadius: 10, padding: '12px 18px', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>{message}</div>}
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginBottom: 12 }}>
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>CAC: <span style={{ color: '#00b8ff' }}>${formatNumber(metrics.CAC)}</span>{lastDelta && lastOldMetrics && lastDelta.CAC !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.CAC)}→{formatNumber(metrics.CAC)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>LTV: <span style={{ color: '#7800ff' }}>${formatNumber(metrics.LTV)}</span>{lastDelta && lastOldMetrics && lastDelta.LTV !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.LTV)}→{formatNumber(metrics.LTV)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Retention: <span style={{ color: '#00b8ff' }}>{metrics.Retention}%</span>{lastDelta && lastOldMetrics && lastDelta.Retention !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Retention)}→{formatNumber(metrics.Retention)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Conversion: <span style={{ color: '#7800ff' }}>{metrics.Conversion}%</span>{lastDelta && lastOldMetrics && lastDelta.Conversion !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Conversion)}→{formatNumber(metrics.Conversion)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Клиенты: <span style={{ color: '#00b8ff' }}>{formatNumber(metrics.Clients)}</span>{lastDelta && lastOldMetrics && lastDelta.Clients !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Clients)}→{formatNumber(metrics.Clients)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Трафик: <span style={{ color: '#00b8ff' }}>{formatNumber(metrics.Traffic)}</span>{lastDelta && lastOldMetrics && lastDelta.Traffic !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Traffic)}→{formatNumber(metrics.Traffic)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Виральность: <span style={{ color: '#7800ff' }}>{metrics.Virality.toFixed(2)}</span>{lastDelta && lastOldMetrics && lastDelta.Virality !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({lastOldMetrics.Virality.toFixed(2)}→{metrics.Virality.toFixed(2)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>NPS: <span style={{ color: '#00b8ff' }}>{metrics.NPS}</span>{lastDelta && lastOldMetrics && lastDelta.NPS !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.NPS)}→{formatNumber(metrics.NPS)})</span> : null}</div>
-        </div>
-        <div style={{ minWidth: 180 }}>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Бюджет: <span style={{ color: '#00b8ff' }}>${formatNumber(metrics.Budget)}</span>{lastDelta && lastOldMetrics && lastDelta.Budget !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Budget)}→{formatNumber(metrics.Budget)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Фикс. затраты: <span style={{ color: '#7800ff' }}>${formatNumber(metrics.Fixed)}</span>{lastDelta && lastOldMetrics && lastDelta.Fixed !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Fixed)}→{formatNumber(metrics.Fixed)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>OpEx: <span style={{ color: '#7800ff' }}>${formatNumber(metrics.OpEx)}</span>{lastDelta && lastOldMetrics && lastDelta.OpEx !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.OpEx)}→{formatNumber(metrics.OpEx)})</span> : null}</div>
-          <div style={{ fontSize: 18, color: '#0a2540', fontWeight: 600 }}>Прибыль: <span style={{ color: metrics.Profit >= 0 ? '#00b8ff' : '#ff3b30' }}>${formatNumber(metrics.Profit)}</span>{lastDelta && lastOldMetrics && lastDelta.Profit !== undefined ? <span style={{ color: '#888', fontSize: 15 }}> ({formatNumber(lastOldMetrics.Profit)}→{formatNumber(metrics.Profit)})</span> : null}</div>
-        </div>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <ProfitChart />
-        </div>
-      </div>
-      <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 8 }}>Выберите инициативу:</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, margin: '1px 0 18px 0' }}>
-        {initiatives.map((ini, idx) => (
-          <button
-            key={ini.title}
-            onClick={() => handleInitiative(idx)}
-            disabled={gameOver}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(90deg,#f0f7ff,#e0f7fa 100%)',
-              border: '1.5px solid #d1d1d6',
-              borderRadius: 16,
-              boxShadow: '0 2px 8px rgba(0,184,255,0.07)',
-              padding: '20px 28px',
-              fontSize: 17,
-              fontWeight: 600,
-              color: '#0a2540',
-              cursor: gameOver ? 'not-allowed' : 'pointer',
-              transition: 'box-shadow 0.2s, transform 0.15s, background 0.2s',
-              marginBottom: 0,
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              gap: 18,
-              minHeight: 64,
-              textAlign: 'left',
-              willChange: 'transform',
-              opacity: gameOver ? 0.6 : 1,
-            }}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={e => e.currentTarget.style.transform = ''}
-            onMouseLeave={e => e.currentTarget.style.transform = ''}
-            onFocus={e => e.currentTarget.style.boxShadow = '0 4px 16px #00b8ff33'}
-            onBlur={e => e.currentTarget.style.boxShadow = ''}
-          >
-            <span style={{ fontSize: 32, marginRight: 16 }}>{ini.icon}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 4 }}>{ini.title}</div>
-              <div style={{ color: '#888', fontSize: 15 }}>{ini.description}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-      {gameOver && (
-        <button onClick={handleExit} style={{ marginTop: 24, width: 180, alignSelf: 'center', padding: '14px 0', background: 'linear-gradient(90deg,#00b8ff,#7800ff 100%)', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,184,255,0.10)', transition: 'background 0.2s' }}>Выйти в симулятор</button>
-      )}
-    </section>
-  );
-}
-
-export default function EconomySimulator() {
-  const [showLegend, setShowLegend] = React.useState(true);
-  const [turn, setTurn] = React.useState(1);
-  const [metrics, setMetrics] = React.useState(() => getRandomInitMetrics());
-  const [profitHistory, setProfitHistory] = React.useState<number[]>([0]);
-  const [achievements, setAchievements] = React.useState<string[]>([]);
-  const [message, setMessage] = React.useState<string | null>(null);
-  const [gameOver, setGameOver] = React.useState(false);
-  const [win, setWin] = React.useState(false);
-  const [initiatives, setInitiatives] = React.useState(getRandomInitiatives());
-  const [lastDelta, setLastDelta] = React.useState<Partial<Metrics> | null>(null);
-  const [lastOldMetrics, setLastOldMetrics] = React.useState<Metrics | null>(null);
-  const [metricsHistory, setMetricsHistory] = React.useState<Metrics[]>([]);
-  const [riskFails, setRiskFails] = React.useState(0);
-  const [abTests, setAbTests] = React.useState(0);
-  const [partnerships, setPartnerships] = React.useState(0);
-  const [viralityClients, setViralityClients] = React.useState(0);
-  const [supportUpgrades, setSupportUpgrades] = React.useState(0);
-  const [opexLowStreak, setOpexLowStreak] = React.useState(0);
-
-  const handleExit = () => {
-    setShowLegend(true);
-    setTurn(1);
-    setMetrics(getRandomInitMetrics());
-    setProfitHistory([0]);
-    setAchievements([]);
-    setMessage(null);
-    setGameOver(false);
-    setWin(false);
-    setInitiatives(getRandomInitiatives());
-    setLastDelta(null);
-    setLastOldMetrics(null);
-  };
-
-  function checkAchievements(metrics: Metrics) {
-    const params = {
-      metrics,
-      history: metricsHistory,
-      riskFails,
-      abTests,
-      partnerships,
-      viralityClients,
-      supportUpgrades,
-      opexLowStreak,
-    };
-    const newAch = [...achievements];
-    for (const ach of ACHIEVEMENTS_EXT) {
-      if (!newAch.includes(ach.label) && ach.check(params)) {
-        newAch.push(ach.label);
+    return () => {
+      if (fireworksRef.current) {
+        fireworksRef.current.stop();
       }
-    }
-    setAchievements(Array.from(new Set(newAch)));
-  }
+    };
+  }, []);
 
   return (
-    <UnitQuestGame
-      showLegend={showLegend}
-      setShowLegend={setShowLegend}
-      onExit={handleExit}
-      turn={turn}
-      setTurn={setTurn}
-      metrics={metrics}
-      setMetrics={setMetrics}
-      profitHistory={profitHistory}
-      setProfitHistory={setProfitHistory}
-      achievements={achievements}
-      setAchievements={setAchievements}
-      message={message}
-      setMessage={setMessage}
-      gameOver={gameOver}
-      setGameOver={setGameOver}
-      win={win}
-      setWin={setWin}
-      initiatives={initiatives}
-      setInitiatives={setInitiatives}
-      lastDelta={lastDelta}
-      setLastDelta={setLastDelta}
-      lastOldMetrics={lastOldMetrics}
-      setLastOldMetrics={setLastOldMetrics}
+    <div 
+      ref={containerRef} 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1000
+      }}
     />
   );
 }
 
-// Пример стиля для инпутов и кнопок в стиле Revolut
-const revolutInputStyle = {
-  width: '100%',
-  padding: '18px 20px',
-  border: '1.5px solid #d1d1d6',
-  borderRadius: 16,
-  fontSize: 20,
-  background: 'linear-gradient(120deg, #f6f8fa 0%, #fff 100%)',
-  outline: 'none',
-  color: '#111',
-  fontWeight: 500,
-  transition: 'border 0.2s, box-shadow 0.2s',
-  boxSizing: 'border-box' as const,
-  marginBottom: 4,
-  boxShadow: '0 2px 12px 0 rgba(0,184,255,0.07)',
+function DefeatModal({ onRestart }: { onRestart: () => void }) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setShow(true), 100);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '32px',
+        borderRadius: '24px',
+        maxWidth: '500px',
+        width: '90%',
+        textAlign: 'center',
+        transform: show ? 'translateY(0)' : 'translateY(100vh)',
+        opacity: show ? 1 : 0,
+        transition: 'all 0.5s ease-out',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+      }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>😔</div>
+        <h2 style={{ fontSize: '24px', marginBottom: '16px', color: '#1f2937' }}>Не в этот раз...</h2>
+        <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
+          Но вы получили ценный опыт! Теперь вы знаете больше о:
+        </p>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '12px',
+          marginBottom: '24px'
+        }}>
+          <div style={{ 
+            padding: '12px', 
+            background: '#f3f4f6', 
+            borderRadius: '8px',
+            color: '#4b5563'
+          }}>
+            📈 Управлении метриками продукта
+          </div>
+          <div style={{ 
+            padding: '12px', 
+            background: '#f3f4f6', 
+            borderRadius: '8px',
+            color: '#4b5563'
+          }}>
+            💡 Принятии стратегических решений
+          </div>
+          <div style={{ 
+            padding: '12px', 
+            background: '#f3f4f6', 
+            borderRadius: '8px',
+            color: '#4b5563'
+          }}>
+            🎯 Балансировке рисков и возможностей
+          </div>
+        </div>
+        <button
+          onClick={onRestart}
+          style={{
+            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            width: '100%'
+          }}
+        >
+          Попробовать еще раз
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  condition: (metrics: Metrics, prevMetrics: Metrics | null, turn: number) => boolean;
+  achieved?: boolean;
 };
-const revolutButtonStyle = (active: boolean = true) => ({
-  padding: '16px 40px',
-  background: active
-    ? 'linear-gradient(90deg,#00b8ff,#7800ff 100%)'
-    : 'linear-gradient(90deg, #e0e0e0 0%, #f2f2f7 100%)',
-  color: active ? '#fff' : '#bbb',
-  fontWeight: 700,
-  fontSize: 20,
-  border: 'none',
-  borderRadius: 18,
-  cursor: active ? 'pointer' : 'not-allowed',
-  boxShadow: active ? '0 2px 12px 0 rgba(0,184,255,0.10)' : 'none',
-  marginBottom: 16,
-  marginTop: 8,
-  transition: 'background 0.2s, box-shadow 0.2s, transform 0.15s',
-  willChange: 'transform',
-  letterSpacing: 0.2,
-});
+
+const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first_profit',
+    title: 'Первая прибыль',
+    description: 'Достигните положительного Profit Net',
+    icon: '💰',
+    condition: (m) => m.ProfitNet > 0
+  },
+  {
+    id: 'users_1000',
+    title: 'Растущее комьюнити',
+    description: 'Достигните 1000 пользователей',
+    icon: '👥',
+    condition: (m) => m.Users >= 1000
+  },
+  {
+    id: 'users_5000',
+    title: 'Популярный продукт',
+    description: 'Достигните 5000 пользователей',
+    icon: '🌟',
+    condition: (m) => m.Users >= 5000
+  },
+  {
+    id: 'margin_50',
+    title: 'Эффективный бизнес',
+    description: 'Достигните маржинальности 50%',
+    icon: '📈',
+    condition: (m) => m.Margin >= 0.5
+  },
+  {
+    id: 'profit_10k',
+    title: 'Путь к успеху',
+    description: 'Достигните Profit Net $10,000',
+    icon: '💎',
+    condition: (m) => m.ProfitNet >= 10000
+  },
+  {
+    id: 'profit_25k',
+    title: 'Уверенный рост',
+    description: 'Достигните Profit Net $25,000',
+    icon: '🚀',
+    condition: (m) => m.ProfitNet >= 25000
+  },
+  {
+    id: 'c1_40',
+    title: 'Мастер конверсии',
+    description: 'Достигните конверсии 40%',
+    icon: '🎯',
+    condition: (m) => m.C1 >= 40
+  },
+  {
+    id: 'low_costs',
+    title: 'Оптимизатор',
+    description: 'Снизьте COGS на 30% от начального значения',
+    icon: '✂️',
+    condition: (m) => m.COGS <= 21 // 30 * 0.7
+  },
+  {
+    id: 'quick_growth',
+    title: 'Быстрый старт',
+    description: 'Достигните 2000 пользователей за первые 5 ходов',
+    icon: '⚡',
+    condition: (m, _, turn) => m.Users >= 2000 && turn <= 5
+  },
+  {
+    id: 'perfect_balance',
+    title: 'Идеальный баланс',
+    description: 'Достигните положительных значений во всех ключевых метриках',
+    icon: '⚖️',
+    condition: (m) => m.ProfitNet > 0 && m.AMPU > 0 && m.Margin > 0 && m.C1 > 20
+  }
+];
+
+function AchievementNotification({ achievement, onClose }: { achievement: Achievement; onClose: () => void }) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    setShow(true);
+    const timer = setTimeout(() => {
+      setShow(false);
+      setTimeout(onClose, 300);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '24px',
+      right: '24px',
+      background: 'rgba(0,0,0,0.9)',
+      color: 'white',
+      padding: '16px 24px',
+      borderRadius: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      transform: show ? 'translateX(0)' : 'translateX(120%)',
+      opacity: show ? 1 : 0,
+      transition: 'all 0.3s ease',
+      zIndex: 1000,
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{ fontSize: '32px' }}>{achievement.icon}</div>
+      <div>
+        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+          Достижение разблокировано!
+        </div>
+        <div style={{ fontSize: '14px', opacity: 0.9 }}>
+          {achievement.title}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AchievementsModal({ achievements, onClose }: { achievements: Achievement[]; onClose: () => void }) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    setShow(true);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '32px',
+        borderRadius: '24px',
+        maxWidth: '600px',
+        width: '90%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        transform: show ? 'scale(1)' : 'scale(0.9)',
+        opacity: show ? 1 : 0,
+        transition: 'all 0.3s ease'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '24px' }}>Достижения</h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '8px'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: '16px'
+        }}>
+          {achievements.map(achievement => (
+            <div
+              key={achievement.id}
+              style={{
+                padding: '16px',
+                borderRadius: '16px',
+                background: achievement.achieved ? 'linear-gradient(135deg, #000000 0%, #333333 100%)' : '#f5f5f7',
+                color: achievement.achieved ? 'white' : '#1d1d1f',
+                opacity: achievement.achieved ? 1 : 0.7
+              }}
+            >
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {achievement.icon}
+              </div>
+              <div style={{ 
+                fontWeight: 600, 
+                marginBottom: '4px',
+                fontSize: '16px'
+              }}>
+                {achievement.title}
+              </div>
+              <div style={{ 
+                fontSize: '14px',
+                opacity: 0.8
+              }}>
+                {achievement.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Add at the top of the file, after imports
+const styles = {
+  button: {
+    padding: '12px 28px',
+    borderRadius: 24,
+    border: '1px solid rgba(0,0,0,0.1)',
+    background: 'rgba(255,255,255,0.8)',
+    fontSize: 17,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  } as const,
+  buttonDark: {
+    padding: '12px 28px',
+    borderRadius: 24,
+    border: 'none',
+    background: '#000',
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  } as const
+};
+
+type MetricKey = keyof Metrics;
+
+const METRIC_LABELS: Record<MetricKey, string> = {
+  AvPrice: 'Average Price',
+  COGS: 'Cost of Goods Sold',
+  C1: 'C1',
+  Users: 'Users',
+  CPUser: 'Cost per User',
+  FixCosts: 'Fixed Costs',
+  Margin: 'Margin',
+  AMPPU: 'Average Monthly Profit per User',
+  AMPU: 'Average Monthly Profit per User',
+  Profit: 'Profit',
+  ProfitNet: 'Net Profit'
+};
+
+const REVERSE_METRIC_LABELS: Record<string, MetricKey> = Object.entries(METRIC_LABELS)
+  .reduce((acc, [key, value]) => ({
+    ...acc,
+    [value]: key as MetricKey
+  }), {} as Record<string, MetricKey>);
+
+function getMetricKeyFromLabel(label: string): MetricKey {
+  return REVERSE_METRIC_LABELS[label] ?? 'ProfitNet';
+}
+
+function getMetricValue(metrics: Metrics, label: string): number {
+  const key = getMetricKeyFromLabel(label);
+  return metrics[key as keyof Metrics];
+}
+
+function isMetricKey(key: string): key is keyof Metrics {
+  return [
+    'AvPrice',
+    'COGS',
+    'C1',
+    'Users',
+    'CPUser',
+    'FixCosts',
+    'Margin',
+    'AMPPU',
+    'AMPU',
+    'Profit',
+    'ProfitNet'
+  ].includes(key);
+}
+
+const METRIC_DISPLAY_MAP: Record<string, keyof Metrics> = {
+  'Fix Costs': 'FixCosts',
+  'Users': 'Users',
+  'AvPrice': 'AvPrice',
+  'COGS': 'COGS',
+  'C1': 'C1',
+  'CPUser': 'CPUser'
+};
+
+export default function EconomySimulator() {
+  const [metrics, setMetrics] = useState<Metrics>(getInitialMetrics());
+  const [turn, setTurn] = useState(1);
+  const [message, setMessage] = useState<string | null>(null);
+  const [profitChangeMessage, setProfitChangeMessage] = useState<string | null>(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
+  const [department, setDepartment] = useState<Department | null>(null);
+  const [currentInitiatives, setCurrentInitiatives] = useState<Initiative[]>([]);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const departmentMeta = department ? DEPARTMENTS.find(dep => dep.key === department) : null;
+  const [initiativeChances, setInitiativeChances] = useState<number[]>([]);
+  const [balance, setBalance] = useState(30000);
+  const [usersBelow100, setUsersBelow100] = useState(0);
+  const [profitNetHistory, setProfitNetHistory] = useState<number[]>([metrics.ProfitNet]);
+  const [prevMetrics, setPrevMetrics] = useState<Metrics | null>(null);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
+
+  function getRandomInitiatives(initiatives: Initiative[], count: number): Initiative[] {
+    const shuffled = [...initiatives].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  function handleDepartmentSelect(dep: Department) {
+    setDepartment(dep);
+    const allInitiatives = INITIATIVES[dep];
+    const selectedInitiatives = getRandomInitiatives(allInitiatives, 3);
+    setCurrentInitiatives(selectedInitiatives);
+    const chances = selectedInitiatives.map(() => 0.2 + Math.random() * 0.7);
+    setInitiativeChances(chances);
+  }
+
+  function handleInitiative(idx: number) {
+    if (gameOver || department === null) return;
+    let m = { ...metrics };
+    setPrevMetrics(metrics);
+    const ini = currentInitiatives[idx];
+    const chance = initiativeChances[idx] ?? ini.successChance;
+    const rand = Math.random();
+    if (rand < chance) {
+      // Полный успех
+      m = ini.apply(m);
+      if (ini.risk && Math.random() < ini.risk.chance) {
+        m = ini.risk.effect(m);
+        setMessage(ini.risk.message);
+      } else {
+        setMessage(ini.description + ` (Успех, инициатива реализована)`);
+      }
+    } else if (rand < chance + (1 - chance)) {
+      // Проверка на полный ноль (ничего не происходит)
+      if (Math.random() < (1 - chance)) {
+        setMessage('Инициатива не сработала.');
+      } else {
+        // Частичный эффект: эффект умножается на вероятность
+        if (ini.partialEffect) {
+          m = ini.partialEffect(m);
+          setMessage('Инициатива частично реализована.');
+        } else {
+          // Если partialEffect не задан, применяем apply с масштабированием эффекта
+          const mFull = ini.apply(metrics);
+          const mPartial: Metrics = { ...metrics };
+          (Object.keys(mFull) as (keyof Metrics)[]).forEach(key => {
+            if (typeof mFull[key] === 'number' && typeof metrics[key] === 'number') {
+              mPartial[key] = (metrics[key] as number) + ((mFull[key] as number) - (metrics[key] as number)) * chance;
+            }
+          });
+          m = recalcMetrics(mPartial);
+          setMessage('Инициатива частично реализована.');
+        }
+      }
+    }
+
+    // Добавляем сообщение об изменении Profit Net
+    const profitNetChange = m.ProfitNet - metrics.ProfitNet;
+    if (Math.abs(profitNetChange) > 0.01) { // Проверяем, что изменение существенное
+      const changeText = formatNumber(Math.abs(profitNetChange));
+      if (profitNetChange > 0) {
+        setProfitChangeMessage(`Profit Net вырос на $${changeText}`);
+      } else {
+        setProfitChangeMessage(`Profit Net снизился на $${changeText}`);
+      }
+    } else {
+      setProfitChangeMessage('Profit Net не изменился');
+    }
+
+    // --- Баланс ---
+    const newBalance = balance + m.ProfitNet;
+    setBalance(newBalance);
+    // --- Users < 100 ---
+    let newUsersBelow100 = usersBelow100;
+    if (m.Users < 100) {
+      newUsersBelow100 += 1;
+      if (newUsersBelow100 === 1) {
+        setMessage(prev => (prev ? prev + ' ' : '') + 'Клиентская база сокращается!');
+      }
+    } else {
+      newUsersBelow100 = 0;
+    }
+    setUsersBelow100(newUsersBelow100);
+    setMetrics(m);
+    setProfitNetHistory(prev => [...prev, m.ProfitNet]);
+    setTurn(turn + 1);
+    setDepartment(null);
+    setCurrentInitiatives([]);
+    setInitiativeChances([]);
+    // --- Победа/Поражение ---
+    if (m.ProfitNet >= 50000 && turn + 1 === 15) {
+      setGameOver(true);
+      setIsVictory(true);
+      setMessage('Победа! Profit Net ≥ $50,000 к 15-му ходу');
+    } else if (newBalance < 0) {
+      setGameOver(true);
+      setIsVictory(false);
+      setMessage('Поражение! Баланс компании ушёл в минус.');
+    } else if (newUsersBelow100 >= 2) {
+      setGameOver(true);
+      setIsVictory(false);
+      setMessage('Поражение! Клиентская база < 100 два хода подряд.');
+    } else if (turn + 1 > 15) {
+      setGameOver(true);
+      setIsVictory(false);
+      setMessage('Игра окончена. Не достигнуты условия победы.');
+    }
+  }
+
+  function handleStartGame() {
+    setShowOnboarding(false);
+  }
+
+  function handleRestart() {
+    setMetrics(getInitialMetrics());
+    setTurn(1);
+    setMessage(null);
+    setProfitChangeMessage(null);
+    setGameOver(false);
+    setIsVictory(false);
+    setDepartment(null);
+    setCurrentInitiatives([]);
+    setInitiativeChances([]);
+    setBalance(30000);
+    setUsersBelow100(0);
+    setProfitNetHistory([getInitialMetrics().ProfitNet]);
+    setPrevMetrics(null);
+  }
+
+  useEffect(() => {
+    if (!prevMetrics || gameOver) return;
+    
+    const newAchievements = achievements.map(achievement => {
+      if (achievement.achieved) return achievement;
+      
+      const isAchieved = achievement.condition(metrics, prevMetrics, turn);
+      if (isAchieved && !achievement.achieved) {
+        setNewAchievement(achievement);
+        return { ...achievement, achieved: true };
+      }
+      return achievement;
+    });
+    
+    setAchievements(newAchievements);
+  }, [metrics, prevMetrics, turn]);
+
+  if (showOnboarding) {
+    return (
+      <section style={{ 
+        maxWidth: 1000, 
+        margin: '0 auto', 
+        padding: '48px 32px',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 32,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+      }}>
+        <div style={{ marginBottom: 48 }}>
+          <h1 style={{ 
+            fontSize: 56, 
+            fontWeight: 700, 
+            marginBottom: 32,
+            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1
+          }}>
+            {ONBOARDING_STEPS[onboardingStep].title}
+          </h1>
+          <div style={{ 
+            marginBottom: 40,
+            fontSize: 17,
+            lineHeight: 1.6,
+            color: '#1d1d1f'
+          }}>
+            {ONBOARDING_STEPS[onboardingStep].content}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 48 }}>
+            <button 
+              onClick={() => setOnboardingStep(prev => Math.max(0, prev - 1))}
+              style={{ 
+                ...styles.button,
+                visibility: onboardingStep === 0 ? 'hidden' : 'visible'
+              }}
+              className="hover-button"
+            >
+              Назад
+            </button>
+            {onboardingStep < ONBOARDING_STEPS.length - 1 ? (
+              <button 
+                onClick={() => setOnboardingStep(prev => prev + 1)}
+                style={styles.buttonDark}
+                className="hover-button-dark"
+              >
+                Далее
+              </button>
+            ) : (
+              <button 
+                onClick={handleStartGame}
+                style={styles.buttonDark}
+                className="hover-button-dark"
+              >
+                Начать игру
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <section style={{ 
+        maxWidth: 1000, 
+        margin: '0 auto', 
+        padding: '32px 32px',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 32,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: 24 
+        }}>
+          <h2 style={{ 
+            fontWeight: 700, 
+            fontSize: 32,
+            letterSpacing: '-0.02em',
+            marginBottom: 24,
+            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            AI Assistant Empire
+          </h2>
+          <button
+            onClick={() => setShowAchievementModal(true)}
+            style={{
+              background: 'none',
+              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              fontSize: '15px'
+            }}
+          >
+            🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+          </button>
+        </div>
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ 
+            fontSize: 17, 
+            color: '#1d1d1f',
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <span style={{ fontWeight: 500 }}>Ход:</span> 
+            <span style={{ 
+              background: '#000', 
+              color: '#fff',
+              padding: '4px 12px',
+              borderRadius: 12,
+              fontSize: 15
+            }}>{turn} / 15</span>
+          </div>
+
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr',
+            gap: 24,
+            margin: '24px 0'
+          }}>
+            <div style={{ 
+              background: 'rgba(255,255,255,0.8)',
+              borderRadius: 24,
+              padding: 24,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Profit Net</div>
+              <div style={{ 
+                fontWeight: 600, 
+                fontSize: 32,
+                letterSpacing: '-0.02em',
+                color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
+              }}>
+                ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
+              </div>
+            </div>
+            <div style={{ 
+              background: 'rgba(255,255,255,0.8)',
+              borderRadius: 24,
+              padding: 24,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: 15, color: '#86868b', marginBottom: 4 }}>Баланс</div>
+              <div style={{ 
+                fontWeight: 600, 
+                fontSize: 32,
+                letterSpacing: '-0.02em',
+                color: balance < 0 ? '#ff3b30' : '#1d1d1f'
+              }}>
+                ${formatNumber(balance)}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ 
+            width: '100%', 
+            height: 200,
+            margin: '24px 0',
+            background: 'rgba(255,255,255,0.8)',
+            borderRadius: 24,
+            padding: 20,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(0,0,0,0.1)'
+          }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={profitNetHistory.map((v, i) => ({ turn: i + 1, profitNet: v }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                <XAxis 
+                  dataKey="turn" 
+                  tickCount={16} 
+                  stroke="#86868b"
+                  label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
+                />
+                <YAxis 
+                  tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                  domain={['auto', 'auto']} 
+                  stroke="#86868b"
+                  label={{ value: 'Profit Net', angle: -90, position: 'insideLeft', offset: 10 }} 
+                />
+                <Tooltip 
+                  formatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                  labelFormatter={l => `Ход: ${l}`}
+                  contentStyle={{
+                    background: 'rgba(255,255,255,0.95)',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    borderRadius: 12,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="profitNet" 
+                  stroke="#000"
+                  strokeWidth={2.5}
+                  dot={false}
+                />
+                <ReferenceLine 
+                  y={50000} 
+                  stroke="#2ecc71" 
+                  strokeDasharray="6 2" 
+                  label={{ 
+                    value: 'Цель: $50,000', 
+                    position: 'right', 
+                    fill: '#2ecc71', 
+                    fontWeight: 600, 
+                    fontSize: 13 
+                  }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 12,
+            marginBottom: 24
+          }}>
+            {[
+              { label: 'Маржинальность', value: `${(metrics.Margin * 100).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
+              { label: 'AMPPU', value: `$${formatNumber(metrics.AMPPU)}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
+              { label: 'Прибыль на пользователя', value: `$${(metrics.AMPU - metrics.CPUser).toFixed(2)}`, color: (metrics.AMPU - metrics.CPUser) < 0 ? '#ff3b30' : '#1d1d1f' }
+            ].map((item, index) => (
+              <div key={index} style={{ 
+                background: 'rgba(255,255,255,0.8)',
+                borderRadius: 20,
+                padding: 20,
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ fontSize: 13, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
+                <div style={{ fontWeight: 600, fontSize: 24, color: item.color }}>{item.value}</div>
+              </div>
+            ))}
+      </div>
+
+          <div style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            gap: 8,
+            marginBottom: 24
+          }}>
+            {[
+              { label: 'Fix Costs', value: `$${formatNumber(metrics.FixCosts)}`, prev: prevMetrics?.FixCosts },
+              { label: 'Users', value: formatNumber(metrics.Users), prev: prevMetrics?.Users },
+              { label: 'AvPrice', value: `$${formatNumber(metrics.AvPrice)}`, prev: prevMetrics?.AvPrice },
+              { label: 'COGS', value: `$${formatNumber(metrics.COGS)}`, prev: prevMetrics?.COGS },
+              { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
+              { label: 'CPUser', value: `$${formatNumber(metrics.CPUser)}`, prev: prevMetrics?.CPUser }
+            ].map((item, index) => {
+              const metricKey = METRIC_DISPLAY_MAP[item.label];
+              return (
+                <div key={index} style={{ 
+                  background: 'rgba(255,255,255,0.8)',
+                  borderRadius: 16,
+                  padding: 12,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ fontSize: 13, color: '#86868b', marginBottom: 2 }}>{item.label}</div>
+                  <div style={{ fontWeight: 600, fontSize: 15 }}>{item.value}</div>
+                  {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
+                    <div style={{ fontSize: 11, color: '#86868b', marginTop: 2 }}>
+                      ({typeof item.prev === 'number' ? 
+                        (item.label === 'C1' ? 
+                          `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
+                          `${item.label.includes('$') ? '$' : ''}${formatNumber(item.prev)} → ${item.label.includes('$') ? '$' : ''}${formatNumber(metrics[metricKey])}`
+                        ) : ''})
+        </div>
+      )}
+    </div>
+              );
+            })}
+          </div>
+
+          {!department && !gameOver && (
+            <>
+              <div style={{ 
+                fontWeight: 600, 
+                fontSize: 20,
+                marginBottom: 16,
+                color: '#1d1d1f'
+              }}>
+                Выберите направление:
+              </div>
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 12
+              }}>
+                {DEPARTMENTS.map(dep => (
+                  <button 
+                    key={dep.key} 
+                    onClick={() => handleDepartmentSelect(dep.key)} 
+                    style={{ 
+                      padding: '16px 20px',
+                      borderRadius: 20,
+                      border: '1px solid rgba(0,0,0,0.1)',
+                      background: 'rgba(255,255,255,0.8)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span style={{ fontSize: 28, marginBottom: 6 }}>{dep.icon}</span>
+                    <span style={{ 
+                      fontWeight: 600,
+                      fontSize: 17,
+                      color: '#1d1d1f',
+                      marginBottom: 6
+                    }}>{dep.label}</span>
+                    <span style={{ 
+                      fontSize: 12,
+                      color: '#86868b',
+                      lineHeight: 1.4
+                    }}>{dep.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {department && !gameOver && (
+            <>
+              <div style={{ 
+                fontWeight: 600, 
+                fontSize: 20,
+                marginBottom: 16,
+                color: '#1d1d1f'
+              }}>
+                Выберите инициативу:
+              </div>
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 12
+              }}>
+                {currentInitiatives.map((ini, idx) => (
+                  <button 
+                    key={ini.title} 
+                    onClick={() => handleInitiative(idx)} 
+                    style={{ 
+                      padding: '16px 20px',
+                      borderRadius: 20,
+                      border: '1px solid rgba(0,0,0,0.1)',
+                      background: 'rgba(255,255,255,0.8)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      cursor: gameOver ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'left',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ 
+                        fontWeight: 600,
+                        fontSize: 17,
+                        color: '#1d1d1f',
+                        marginBottom: 6
+                      }}>{ini.title}</div>
+                      <div style={{ 
+                        color: '#86868b',
+                        fontSize: 14,
+                        marginBottom: 6,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>{ini.description}</div>
+                    </div>
+                    <div style={{ 
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: 10,
+                      background: '#000',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      alignSelf: 'flex-start'
+                    }}>
+                      Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {message && (
+            <div style={{ 
+              marginTop: 32,
+              padding: 20,
+              borderRadius: 20,
+              background: 'rgba(0,0,0,0.05)',
+              color: '#1d1d1f',
+              fontSize: 17,
+              fontWeight: 500
+            }}>{message}</div>
+          )}
+
+          {profitChangeMessage && (
+            <div style={{ 
+              marginTop: 16,
+              padding: 20,
+              borderRadius: 20,
+              background: profitChangeMessage.includes('вырос') ? 'rgba(46,204,113,0.1)' : 
+                         profitChangeMessage.includes('снизился') ? 'rgba(255,59,48,0.1)' : 
+                         'rgba(0,0,0,0.05)',
+              color: profitChangeMessage.includes('вырос') ? '#2ecc71' : 
+                    profitChangeMessage.includes('снизился') ? '#ff3b30' : 
+                    '#86868b',
+              fontSize: 17,
+              fontWeight: 500
+            }}>{profitChangeMessage}</div>
+          )}
+
+          {gameOver && (
+            <div 
+              onClick={() => isVictory && setShowFireworks(true)}
+              style={{ 
+                marginTop: 32,
+                padding: 24,
+                borderRadius: 24,
+                background: isVictory ? 'rgba(46,204,113,0.1)' : 'rgba(255,59,48,0.1)',
+                color: isVictory ? '#2ecc71' : '#ff3b30',
+                fontSize: 24,
+                fontWeight: 600,
+                textAlign: 'center',
+                cursor: isVictory ? 'pointer' : 'default',
+                transition: 'all 0.2s ease',
+                transform: isVictory ? 'scale(1.02)' : 'none'
+              }}>
+              {metrics.ProfitNet >= 50000 ? 'Вы выиграли!' : 'Игра окончена'}
+            </div>
+          )}
+        </div>
+      </section>
+      {(gameOver && isVictory && showFireworks) && <VictoryFireworks />}
+      {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} />}
+      {showAchievementModal && (
+        <AchievementsModal 
+          achievements={achievements}
+          onClose={() => setShowAchievementModal(false)}
+        />
+      )}
+      {newAchievement && (
+        <AchievementNotification 
+          achievement={newAchievement}
+          onClose={() => setNewAchievement(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// Add at the end of the file
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .hover-button:hover {
+    background: rgba(255,255,255,0.9);
+    transform: translateY(-1px);
+  }
+  .hover-button-dark:hover {
+    background: #1d1d1f;
+    transform: translateY(-1px);
+  }
+`;
+document.head.appendChild(styleSheet);

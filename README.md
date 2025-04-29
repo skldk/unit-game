@@ -1,46 +1,54 @@
-# Getting Started with Create React App
+# AI Assistant Empire: Восхождение к прибыли
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Бизнес-симулятор управления AI-стартапом. Ваша задача - превратить убыточный стартап в прибыльную компанию за 15 месяцев.
 
-## Available Scripts
+## Установка
 
-In the project directory, you can run:
+1. Убедитесь, что у вас установлен Node.js версии 14 или выше
+2. Склонируйте репозиторий
+3. Перейдите в директорию проекта
+4. Установите зависимости:
 
-### `npm start`
+```bash
+npm install
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Запуск
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Для запуска в режиме разработки:
 
-### `npm test`
+```bash
+npm start
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Приложение будет доступно по адресу [http://localhost:3000](http://localhost:3000)
 
-### `npm run build`
+## Сборка
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Для создания production-сборки:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run build
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Технологии
 
-### `npm run eject`
+- React 18
+- TypeScript
+- Recharts для графиков
+- Fireworks-js для анимаций
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Игровой процесс
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Управляйте метриками компании через различные инициативы
+2. Следите за ключевыми показателями: прибыль, пользователи, конверсия
+3. Принимайте стратегические решения по развитию продукта
+4. Достигните цели в $50,000 месячной прибыли за 15 ходов
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Особенности
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Реалистичная экономическая модель
+- Система достижений
+- Анимации победы/поражения
+- Детальная статистика и графики
+- Адаптивный дизайн в стиле Apple
