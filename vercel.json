@@ -3,27 +3,28 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+      "use": "@vercel/static-build"
     }
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
+      "src": "^/static/(.*)",
       "dest": "/static/$1"
     },
     {
-      "src": "/favicon.ico",
+      "src": "^/favicon.ico",
       "dest": "/favicon.ico"
     },
     {
-      "src": "/manifest.json",
+      "src": "^/manifest.json",
       "dest": "/manifest.json"
     },
     {
-      "src": "/(.*)",
+      "src": "^/robots.txt",
+      "dest": "/robots.txt"
+    },
+    {
+      "src": "^/(.*)",
       "dest": "/index.html"
     }
   ]
