@@ -954,6 +954,7 @@ const METRIC_DISPLAY_MAP: Record<string, keyof Metrics> = {
   'COGS': 'COGS',
   'C1': 'C1',
   'CPUser': 'CPUser'
+  
 };
 
 function StepNotification({ message, profitChangeMessage, onClose }: { message: string; profitChangeMessage: string; onClose: () => void }) {
