@@ -292,10 +292,10 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
           <div>
             <p>📊 <b>Метрики:</b></p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li>Users = 500</li>
+              <li>Users = 200</li>
               <li>AvPrice = $20</li>
               <li>COGS = $15</li>
-              <li>AMPU = -$3</li>
+              <li>AMPU-CPUsers = -$18</li>
             </ul>
           </div>
         </div>
@@ -954,7 +954,7 @@ const METRIC_DISPLAY_MAP: Record<string, keyof Metrics> = {
   'COGS': 'COGS',
   'C1': 'C1',
   'CPUser': 'CPUser'
-  
+
 };
 
 function StepNotification({ message, profitChangeMessage, onClose }: { message: string; profitChangeMessage: string; onClose: () => void }) {
