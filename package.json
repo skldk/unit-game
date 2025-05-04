@@ -1,1 +1,34 @@
-{"name":"ai-assistant-empire","version":"1.0.0","private":true,"dependencies":{"@types/node":"^16.18.0","@types/react":"^18.2.0","@types/react-dom":"^18.2.0","fireworks-js":"^2.10.7","react":"^18.2.0","react-dom":"^18.2.0","react-scripts":"5.0.1","recharts":"^2.10.3","typescript":"^4.9.5","web-vitals":"^3.5.2"},"scripts":{"start":"react-scripts start","build":"CI=false SKIP_PREFLIGHT_CHECK=true react-scripts build","test":"react-scripts test --passWithNoTests","eject":"react-scripts eject"},"eslintConfig":{"extends":["react-app","react-app/jest"]},"browserslist":{"production":[">0.2%","not dead","not op_mini all"],"development":["last 1 chrome version","last 1 firefox version","last 1 safari version"]},"devDependencies":{"@testing-library/jest-dom":"^5.16.5","@testing-library/react":"^13.4.0","@types/testing-library__react":"^10.2.0"}}
+{
+  "name": "ai-assistant-empire",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@types/node": "^16.18.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "fireworks-js": "^2.10.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.2",
+    "recharts": "^2.10.3",
+    "typescript": "^5.3.3",
+    "web-vitals": "^3.5.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --passWithNoTests",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": ["react-app", "react-app/jest"]
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1"
+  }
+}
