@@ -472,6 +472,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
           }}>
             💰 Profit Net: ${formatNumber(Math.round(metrics.ProfitNet))}
           </div>
+         
           <div style={{ 
             padding: '12px', 
             background: '#f3f4f6', 
@@ -517,7 +518,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
   );
 }
 
-function DefeatModal({ onRestart }: { onRestart: () => void }) {
+function DefeatModal({ onRestart, metrics }: { onRestart: () => void; metrics: Metrics }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -566,7 +567,7 @@ function DefeatModal({ onRestart }: { onRestart: () => void }) {
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            📈 Управлении метриками продукта
+            💰 Profit Net: ${formatNumber(Math.round(metrics.ProfitNet))}
           </div>
           <div style={{ 
             padding: '12px', 
@@ -574,7 +575,7 @@ function DefeatModal({ onRestart }: { onRestart: () => void }) {
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            💡 Принятии стратегических решений
+            📈 Управлении метриками продукта
           </div>
           <div style={{ 
             padding: '12px', 
@@ -1810,7 +1811,7 @@ export default function EconomySimulator() {
         </section>
       </div>
       {gameOver && isVictory && <VictoryModal onRestart={handleRestart} metrics={metrics} />}
-      {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} />}
+      {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} metrics={metrics} />}
       {showStepNotification && message && profitChangeMessage && !gameOver && (
         <StepNotification 
           message={message}
