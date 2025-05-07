@@ -962,7 +962,7 @@ const METRIC_DISPLAY_MAP: Record<string, keyof Metrics> = {
 
 };
 
-function StepNotification({ message, profitChangeMessage, onClose }: { message: string; profitChangeMessage: string; onClose: () => void }) {
+function StepNotification({ message, profitChangeMessage, onClose, metrics, balance, showHints }: { message: string; profitChangeMessage: string; onClose: () => void; metrics: Metrics; balance: number; showHints: boolean }) {
   const [show, setShow] = useState(false);
   const isPositive = profitChangeMessage.includes('вырос');
 
@@ -971,42 +971,37 @@ function StepNotification({ message, profitChangeMessage, onClose }: { message: 
   }, []);
 
   // Определяем поясняющий текст в зависимости от типа сообщения
-  const getExplanationText = () => {
-    if (message.includes('SEO-кампания')) {
-      return 'SEO-оптимизация помогает привлекать органический трафик, что снижает стоимость привлечения пользователей.';
-    } else if (message.includes('таргетированная реклама')) {
-      return 'Таргетированная реклама позволяет более точно попадать в целевую аудиторию, повышая конверсию.';
-    } else if (message.includes('партнерство с блогером')) {
-      return 'Партнерство с блогерами может быстро увеличить базу пользователей, но важно выбрать правильного партнера.';
-    } else if (message.includes('A/B тесты')) {
-      return 'A/B тестирование помогает оптимизировать конверсию, выявляя наиболее эффективные решения.';
-    } else if (message.includes('реферальная программа')) {
-      return 'Реферальные программы стимулируют существующих пользователей привлекать новых клиентов.';
-    } else if (message.includes('контекстная реклама')) {
-      return 'Контекстная реклама эффективна для привлечения заинтересованных пользователей.';
-    } else if (message.includes('ИИ-оптимизация')) {
-      return 'Внедрение ИИ помогает оптимизировать процессы и снизить операционные расходы.';
-    } else if (message.includes('премиум-подписка')) {
-      return 'Премиум-подписка увеличивает средний чек, но может снизить конверсию.';
-    } else if (message.includes('автоматизация поддержки')) {
-      return 'Автоматизация поддержки снижает расходы и может улучшить качество обслуживания.';
-    } else if (message.includes('новая фича')) {
-      return 'Новые функции увеличивают ценность продукта и могут привлечь новых пользователей.';
-    } else if (message.includes('UI/UX')) {
-      return 'Улучшение интерфейса повышает удовлетворенность пользователей и конверсию.';
-    } else if (message.includes('персонализация')) {
-      return 'Персонализация улучшает пользовательский опыт и повышает конверсию.';
-    } else if (message.includes('чек-листы')) {
-      return 'Чек-листы помогают новым пользователям быстрее освоить продукт.';
-    } else if (message.includes('пробный период')) {
-      return 'Бесплатный пробный период помогает пользователям оценить ценность продукта.';
-    } else if (message.includes('аутсорсинг')) {
-      return 'Аутсорсинг помогает оптимизировать постоянные расходы.';
-    } else if (message.includes('переезд')) {
-      return 'Оптимизация офисных расходов может значительно снизить фиксированные затраты.';
-    } else {
-      return 'Каждое решение влияет на ключевые метрики бизнеса. Анализируйте результаты и корректируйте стратегию.';
+  const getExplanationText = (metrics: Metrics, balance: number) => {
+    const unit1 = metrics.AMPPU;
+    const unit2 = metrics.AMPU - metrics.CPUser;
+    const unit3 = metrics.ProfitNet;
+    const cpUser = metrics.CPUser;
+    const fixCost = metrics.FixCosts;
+    const c1 = metrics.C1;
+    const cogs = metrics.COGS;
+
+    if (unit2 < 0 && cpUser > 4) {
+      return 'Юнит 2 в минусе: каждый пользователь — убыток. Снижайте CPUsers через SEO-контент и оптимизацию рекламных кампаний.';
     }
+    if (unit2 < 0 && cpUser <= 4) {
+      return 'Выводите Юнит 2 уровня из убытков. Снижайте CPUsers через SEO и оптимизацию рекламы';
+    }
+    if (unit1 > 0 && unit2 > 0 && unit3 < 0 && -3 * unit3 > balance && fixCost > 2900) {
+      return 'Оптимизируйте FixCost: риск дефицита бюджета';
+    }
+    if (unit1 > 0 && unit2 > 0 && c1 < 40) {
+      return 'Доведите онбординг в первую сессию (С1) до 40%';
+    }
+    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5) {
+      return 'Снизьте COGS продукта до 5$';
+    }
+    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
+      return 'Масштабируйте пользовательскую базу агрессивно';
+    }
+    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 < 50) {
+      return 'Растите Av.Price: повышайте ценность продукта';
+    }
+    return 'Каждое решение влияет на ключевые метрики бизнеса. Анализируйте результаты и корректируйте стратегию.';
   };
 
   return (
@@ -1056,14 +1051,14 @@ function StepNotification({ message, profitChangeMessage, onClose }: { message: 
         </div>
         <div style={{ 
           padding: '16px',
-          background: '#f3f4f6',
+          background: showHints ? '#f3f4f6' : 'transparent',
           borderRadius: '12px',
           marginBottom: '24px',
           color: '#4b5563',
           fontSize: '14px',
           lineHeight: 1.5
         }}>
-          {getExplanationText()}
+          {showHints ? getExplanationText(metrics, balance) : ''}
         </div>
         <button
           onClick={() => {
@@ -1115,6 +1110,7 @@ export default function EconomySimulator() {
   const [showStepNotification, setShowStepNotification] = useState(false);
   const [stepNotificationMessage, setStepNotificationMessage] = useState<string | null>(null);
   const [stepNotificationProfitChange, setStepNotificationProfitChange] = useState<string | null>(null);
+  const [showHints, setShowHints] = useState(false);
 
   function getRandomInitiatives(initiatives: Initiative[], count: number): Initiative[] {
     const shuffled = [...initiatives].sort(() => 0.5 - Math.random());
@@ -1391,23 +1387,43 @@ export default function EconomySimulator() {
             }}>
              InboxMind - AI Mail Master
             </h2>
-            <button
-              onClick={() => setShowAchievementModal(true)}
-              style={{
-                background: 'none',
-                border: '1px solid rgba(0,0,0,0.1)',
-                borderRadius: '12px',
-                padding: '8px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                fontSize: '15px',
-                marginRight: '24px'
-              }}
-            >
-              🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setShowAchievementModal(true)}
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  marginRight: '0'
+                }}
+              >
+                🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+              </button>
+              <button
+                onClick={() => setShowHints(v => !v)}
+                style={{
+                  background: showHints ? 'linear-gradient(135deg, #000000 0%, #333333 100%)' : '#fff',
+                  color: showHints ? '#fff' : '#1d1d1f',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 500
+                }}
+              >
+                💡 Подсказки
+              </button>
+            </div>
           </div>
 
           {/* Main content */}
@@ -1821,6 +1837,9 @@ export default function EconomySimulator() {
             setMessage(null);
             setProfitChangeMessage(null);
           }}
+          metrics={metrics}
+          balance={balance}
+          showHints={showHints}
         />
       )}
       {showAchievementModal && (
