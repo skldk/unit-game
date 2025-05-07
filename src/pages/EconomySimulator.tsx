@@ -170,7 +170,7 @@ const INITIATIVES: Record<Department, Initiative[]> = {
 
     // Минимальный эффект (20%)
     { title: '🔥 Внедрить шаблоны для быстрого старта', description: 'C1 +120% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 2.20), 100)}), successChance: 0.8 }
-],
+  ],
   admin: [
 
 
@@ -194,7 +194,7 @@ const INITIATIVES: Record<Department, Initiative[]> = {
 
     // Минимальный эффект (900)
     { title: 'Оптимизировать софт-лицензии', description: 'FixCosts -$900', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 900, 1000)}), successChance: 0.8 }
-],
+  ],
 };
 
 function recalcMetrics(m: Metrics): Metrics {
@@ -412,7 +412,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
 
   ];
 */
-function VictoryModal({ onRestart }: { onRestart: () => void }) {
+function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: Metrics }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -466,25 +466,33 @@ function VictoryModal({ onRestart }: { onRestart: () => void }) {
         }}>
           <div style={{ 
             padding: '12px', 
-            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)', 
+            background: '#f3f4f6', 
             borderRadius: '8px',
-            color: 'white'
+            color: '#4b5563'
+          }}>
+            💰 Profit Net: ${formatNumber(Math.round(metrics.ProfitNet))}
+          </div>
+          <div style={{ 
+            padding: '12px', 
+            background: '#f3f4f6', 
+            borderRadius: '8px',
+            color: '#4b5563'
           }}>
             🚀 Достигнута цель: Profit Net ≥ $50,000
           </div>
           <div style={{ 
             padding: '12px', 
-            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)', 
+            background: '#f3f4f6', 
             borderRadius: '8px',
-            color: 'white'
+            color: '#4b5563'
           }}>
             💎 Компания готова к масштабированию
           </div>
           <div style={{ 
             padding: '12px', 
-            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)', 
+            background: '#f3f4f6', 
             borderRadius: '8px',
-            color: 'white'
+            color: '#4b5563'
           }}>
             🏆 Вы стали легендой Кремниевой долины
           </div>
@@ -492,19 +500,15 @@ function VictoryModal({ onRestart }: { onRestart: () => void }) {
         <button
           onClick={onRestart}
           style={{
-            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
             color: 'white',
             border: 'none',
             padding: '12px 24px',
-            borderRadius: '12px',
+            borderRadius: '8px',
             fontSize: '16px',
             cursor: 'pointer',
-            fontWeight: 500,
-            width: '100%',
-            transition: 'transform 0.2s ease, opacity 0.2s ease'
+            width: '100%'
           }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           Начать новую игру
         </button>
@@ -1416,193 +1420,193 @@ export default function EconomySimulator() {
             gap: '16px'
           }}>
             {/* Turn counter */}
-            <div style={{ 
-              fontSize: 15, 
-              color: '#1d1d1f',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}>
-              <span style={{ fontWeight: 500 }}>Ход:</span> 
-              <span style={{ 
-                background: '#000', 
-                color: '#fff',
-                padding: '4px 12px',
-                borderRadius: 12,
-                fontSize: 15
-              }}>{turn} / 15</span>
-            </div>
+              <div style={{ 
+                fontSize: 15, 
+                color: '#1d1d1f',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                <span style={{ fontWeight: 500 }}>Ход:</span> 
+                <span style={{ 
+                  background: '#000', 
+                  color: '#fff',
+                  padding: '4px 12px',
+                  borderRadius: 12,
+                  fontSize: 15
+                }}>{turn} / 15</span>
+              </div>
 
             {/* Metrics grid */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr',
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr',
               gap: 16
-            }}>
-              <div style={{ 
-                background: 'rgba(255,255,255,0.8)',
-                borderRadius: 20,
-                padding: 16,
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0,0,0,0.1)'
               }}>
-                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Profit Net / Цель $50 000</div>
                 <div style={{ 
-                  fontWeight: 600, 
-                  fontSize: 24,
-                  letterSpacing: '-0.02em',
-                  color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
-                }}>
-                  ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
-                </div>
-              </div>
-              <div style={{ 
-                background: 'rgba(255,255,255,0.8)',
-                borderRadius: 20,
-                padding: 16,
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Баланс</div>
-                <div style={{ 
-                  fontWeight: 600, 
-                  fontSize: 24,
-                  letterSpacing: '-0.02em',
-                  color: balance < 0 ? '#ff3b30' : '#1d1d1f'
-                }}>
-                  ${formatNumber(Math.round(balance))}
-                </div>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div style={{ 
-              width: '100%', 
-              height: 160,
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 20,
-              padding: '12px',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0,0,0,0.1)'
-            }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={profitNetHistory.map((v, i) => ({ turn: i + 1, profitNet: v }))} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-                  <XAxis 
-                    dataKey="turn" 
-                    tickCount={16} 
-                    stroke="#86868b"
-                    label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
-                  />
-                  <YAxis 
-                    tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
-                    domain={['auto', 'auto']} 
-                    stroke="#86868b"
-                    label={{ value: 'Profit Net', angle: -90, position: 'insideLeft', offset: 10 }} 
-                  />
-                  <Tooltip 
-                    formatter={v => `$${v.toLocaleString('ru-RU')}`} 
-                    labelFormatter={l => `Ход: ${l}`}
-                    contentStyle={{
-                      background: 'rgba(255,255,255,0.95)',
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: 12,
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="profitNet" 
-                    stroke="#000"
-                    strokeWidth={2.5}
-                    dot={false}
-                  />
-                  <ReferenceLine 
-                    y={50000} 
-                    stroke="#2ecc71" 
-                    strokeDasharray="6 2" 
-                    label={{ 
-                      value: 'Цель: $50,000', 
-                      position: 'right', 
-                      fill: '#2ecc71', 
-                      fontWeight: 600, 
-                      fontSize: 13 
-                    }} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Additional metrics */}
-            <div style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 8
-            }}>
-              {[
-                { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'AMPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'AMPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f' }
-              ].map((item, index) => (
-                <div key={index} style={{ 
                   background: 'rgba(255,255,255,0.8)',
-                  borderRadius: 16,
-                  padding: 12,
+                borderRadius: 20,
+                padding: 16,
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(0,0,0,0.1)'
                 }}>
-                  <div style={{ fontSize: 12, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontWeight: 600, fontSize: 18, color: item.color }}>{item.value}</div>
+                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Profit Net / Цель $50 000</div>
+                  <div style={{ 
+                    fontWeight: 600, 
+                  fontSize: 24,
+                    letterSpacing: '-0.02em',
+                    color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
+                  }}>
+                    ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
+                  </div>
                 </div>
-              ))}
-            </div>
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.8)',
+                borderRadius: 20,
+                padding: 16,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(0,0,0,0.1)'
+                }}>
+                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Баланс</div>
+                  <div style={{ 
+                    fontWeight: 600, 
+                  fontSize: 24,
+                    letterSpacing: '-0.02em',
+                    color: balance < 0 ? '#ff3b30' : '#1d1d1f'
+                  }}>
+                  ${formatNumber(Math.round(balance))}
+                  </div>
+                </div>
+              </div>
 
-            {/* Detailed metrics */}
-            <div style={{ 
-              display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: 6
-            }}>
-              {[
-                { label: 'Fix Costs', value: `$${formatNumber(Math.round(metrics.FixCosts))}`, prev: prevMetrics?.FixCosts },
-                { label: 'Users', value: `${formatNumber(Math.round(metrics.Users))}`, prev: prevMetrics?.Users },
-                { label: 'AvPrice', value: `$${formatNumber(Math.round(metrics.AvPrice))}`, prev: prevMetrics?.AvPrice },
-                { label: 'COGS', value: `$${formatNumber(Math.round(metrics.COGS))}`, prev: prevMetrics?.COGS },
-                { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
-                { label: 'CPUser', value: `$${formatNumber(Math.round(metrics.CPUser))}`, prev: prevMetrics?.CPUser }
-              ].map((item, index) => {
-                const metricKey = METRIC_DISPLAY_MAP[item.label];
-                return (
+            {/* Chart */}
+              <div style={{ 
+                width: '100%', 
+              height: 160,
+                background: 'rgba(255,255,255,0.8)',
+              borderRadius: 20,
+              padding: '12px',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(0,0,0,0.1)'
+              }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={profitNetHistory.map((v, i) => ({ turn: i + 1, profitNet: v }))} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                    <XAxis 
+                      dataKey="turn" 
+                      tickCount={16} 
+                      stroke="#86868b"
+                      label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
+                    />
+                    <YAxis 
+                      tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                      domain={['auto', 'auto']} 
+                      stroke="#86868b"
+                      label={{ value: 'Profit Net', angle: -90, position: 'insideLeft', offset: 10 }} 
+                    />
+                    <Tooltip 
+                      formatter={v => `$${v.toLocaleString('ru-RU')}`} 
+                      labelFormatter={l => `Ход: ${l}`}
+                      contentStyle={{
+                        background: 'rgba(255,255,255,0.95)',
+                        border: '1px solid rgba(0,0,0,0.1)',
+                        borderRadius: 12,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="profitNet" 
+                      stroke="#000"
+                      strokeWidth={2.5}
+                      dot={false}
+                    />
+                    <ReferenceLine 
+                      y={50000} 
+                      stroke="#2ecc71" 
+                      strokeDasharray="6 2" 
+                      label={{ 
+                        value: 'Цель: $50,000', 
+                        position: 'right', 
+                        fill: '#2ecc71', 
+                        fontWeight: 600, 
+                        fontSize: 13 
+                      }} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+            {/* Additional metrics */}
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 8
+              }}>
+                {[
+                { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
+                { label: 'AMPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
+                { label: 'AMPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f' }
+                ].map((item, index) => (
                   <div key={index} style={{ 
                     background: 'rgba(255,255,255,0.8)',
-                    borderRadius: 12,
-                    padding: 8,
+                  borderRadius: 16,
+                  padding: 12,
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
                     border: '1px solid rgba(0,0,0,0.1)'
                   }}>
+                  <div style={{ fontSize: 12, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ fontWeight: 600, fontSize: 18, color: item.color }}>{item.value}</div>
+                  </div>
+                ))}
+          </div>
+
+            {/* Detailed metrics */}
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: 6
+              }}>
+                {[
+                { label: 'Fix Costs', value: `$${formatNumber(Math.round(metrics.FixCosts))}`, prev: prevMetrics?.FixCosts },
+                { label: 'Users', value: `${formatNumber(Math.round(metrics.Users))}`, prev: prevMetrics?.Users },
+                { label: 'AvPrice', value: `$${formatNumber(Math.round(metrics.AvPrice))}`, prev: prevMetrics?.AvPrice },
+                { label: 'COGS', value: `$${formatNumber(Math.round(metrics.COGS))}`, prev: prevMetrics?.COGS },
+                  { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
+                { label: 'CPUser', value: `$${formatNumber(Math.round(metrics.CPUser))}`, prev: prevMetrics?.CPUser }
+                ].map((item, index) => {
+                  const metricKey = METRIC_DISPLAY_MAP[item.label];
+                  return (
+                    <div key={index} style={{ 
+                      background: 'rgba(255,255,255,0.8)',
+                    borderRadius: 12,
+                    padding: 8,
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(0,0,0,0.1)'
+                    }}>
                     <div style={{ fontSize: 11, color: '#86868b', marginBottom: 2 }}>{item.label}</div>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{item.value}</div>
-                    {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
+                      {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
                       <div style={{ fontSize: 10, color: '#86868b', marginTop: 2 }}>
-                        ({typeof item.prev === 'number' ? 
-                          (item.label === 'C1' ? 
-                            `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
+                          ({typeof item.prev === 'number' ? 
+                            (item.label === 'C1' ? 
+                              `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
                             `${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(item.prev))} → ${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(metrics[metricKey]))}`
-                          ) : ''})
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                            ) : ''})
+          </div>
+        )}
+      </div>
+                    );
+                  })}
+              </div>
 
             {/* Department selection */}
-            {!department && !gameOver && (
+              {!department && !gameOver && (
               <div style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,248,248,0.95) 100%)',
                 borderRadius: 20,
@@ -1635,50 +1639,50 @@ export default function EconomySimulator() {
                   }}>
                     Выберите направление
                   </div>
-                </div>
-                <div style={{ 
-                  display: 'grid',
+                  </div>
+                  <div style={{ 
+                    display: 'grid',
                   gridTemplateColumns: 'repeat(4, 1fr)',
                   gap: 8
-                }}>
-                  {DEPARTMENTS.map(dep => (
-                    <button 
-                      key={dep.key} 
-                      onClick={() => handleDepartmentSelect(dep.key)} 
-                      style={{ 
+                  }}>
+                    {DEPARTMENTS.map(dep => (
+                      <button 
+                        key={dep.key} 
+                        onClick={() => handleDepartmentSelect(dep.key)} 
+                        style={{ 
                         padding: '12px 16px',
                         borderRadius: 16,
-                        border: '1px solid rgba(0,0,0,0.1)',
-                        background: 'rgba(255,255,255,0.8)',
-                        backdropFilter: 'blur(20px)',
-                        WebkitBackdropFilter: 'blur(20px)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          background: 'rgba(255,255,255,0.8)',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
                       <span style={{ fontSize: 24, marginBottom: 4 }}>{dep.icon}</span>
-                      <span style={{ 
-                        fontWeight: 600,
+                        <span style={{ 
+                          fontWeight: 600,
                         fontSize: 15,
-                        color: '#1d1d1f',
+                          color: '#1d1d1f',
                         marginBottom: 4
-                      }}>{dep.label}</span>
-                      <span style={{ 
+                        }}>{dep.label}</span>
+                        <span style={{ 
                         fontSize: 11,
-                        color: '#86868b',
-                        lineHeight: 1.4
-                      }}>{dep.desc}</span>
-                    </button>
-                  ))}
-                </div>
+                          color: '#86868b',
+                          lineHeight: 1.4
+                        }}>{dep.desc}</span>
+                      </button>
+                    ))}
+                  </div>
               </div>
-            )}
+              )}
 
             {/* Initiative selection */}
-            {department && !gameOver && (
+              {department && !gameOver && (
               <div style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,248,248,0.95) 100%)',
                 borderRadius: 20,
@@ -1716,72 +1720,72 @@ export default function EconomySimulator() {
                     <span style={{ fontSize: 20 }}>{DEPARTMENTS.find(d => d.key === department)?.icon}</span>
                     <span style={{ fontSize: 15 }}>{DEPARTMENTS.find(d => d.key === department)?.label}</span>
                   </div>
-                </div>
-                <div style={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  </div>
+                  <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
                   gap: 8
-                }}>
-                  {currentInitiatives.map((ini, idx) => (
-                    <button 
-                      key={ini.title} 
-                      onClick={() => handleInitiative(idx)} 
-                      style={{ 
-                        padding: '16px 20px',
+                  }}>
+                    {currentInitiatives.map((ini, idx) => (
+                      <button 
+                        key={ini.title} 
+                        onClick={() => handleInitiative(idx)} 
+                        style={{ 
+                          padding: '16px 20px',
                         borderRadius: 16,
-                        border: '1px solid rgba(0,0,0,0.1)',
+                          border: '1px solid rgba(0,0,0,0.1)',
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%)',
-                        backdropFilter: 'blur(20px)',
-                        WebkitBackdropFilter: 'blur(20px)',
-                        cursor: gameOver ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease',
-                        textAlign: 'left',
+                          backdropFilter: 'blur(20px)',
+                          WebkitBackdropFilter: 'blur(20px)',
+                          cursor: gameOver ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left',
                         height: '180px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between'
-                      }}
-                    >
-                      <div>
-                        <div style={{ 
-                          fontWeight: 600,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <div>
+                          <div style={{ 
+                            fontWeight: 600,
                           fontSize: 16,
-                          color: '#1d1d1f',
+                            color: '#1d1d1f',
                           marginBottom: 8
-                        }}>{ini.title}</div>
-                        <div style={{ 
-                          color: '#86868b',
+                          }}>{ini.title}</div>
+                          <div style={{ 
+                            color: '#86868b',
                           fontSize: 13,
                           marginBottom: 12,
-                          display: '-webkit-box',
+                            display: '-webkit-box',
                           WebkitLineClamp: 4,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           lineHeight: 1.5
-                        }}>{ini.description}</div>
-                      </div>
-                      <div style={{ 
-                        display: 'inline-block',
+                          }}>{ini.description}</div>
+                        </div>
+                        <div style={{ 
+                          display: 'inline-block',
                         padding: '4px 12px',
                         borderRadius: 8,
                         background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-                        color: '#fff',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        alignSelf: 'flex-start'
-                      }}>
-                        Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
-                      </div>
-                    </button>
-                  ))}
+                          color: '#fff',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          alignSelf: 'flex-start'
+                        }}>
+                          Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </section>
       </div>
-      {gameOver && isVictory && <VictoryModal onRestart={handleRestart} />}
+      {gameOver && isVictory && <VictoryModal onRestart={handleRestart} metrics={metrics} />}
       {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} />}
       {showStepNotification && message && profitChangeMessage && !gameOver && (
         <StepNotification 
