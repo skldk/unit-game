@@ -256,8 +256,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
         <p style={{ marginBottom: 16 }}>За 15 месяцев (ходов):</p>
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          <li style={{ marginBottom: 12 }}>🔥 <b>Исправить экономику:</b> Снизить COGS до $5, поднять цену до $30</li>
-          <li style={{ marginBottom: 12 }}>🚀 <b>Захватить нишу:</b> 50 000 компаний - must-have для бизнеса</li>
+          <li style={{ marginBottom: 12 }}>🔥 <b>Исправить экономику:</b> Снизить COGS до $5, поднять цену до $50</li>
+          <li style={{ marginBottom: 12 }}>🚀 <b>Захватить нишу:</b> 5 000 пользователей - must-have для бизнеса</li>
           <li>💎 <b>Создать легенду:</b> Стать "ChatGPT для деловой переписки"</li>
         </ul>
         <div style={{ marginTop: 16, padding: 16, background: '#f8fafc', borderRadius: 8 }}>
@@ -287,7 +287,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
           </div>
           <div>
             <p>💰 <b>Бюджет:</b></p>
-            <p>$50,000 (последний раунд)</p>
+            <p>$30,000 (последний раунд)</p>
           </div>
           <div>
             <p>📊 <b>Метрики:</b></p>
@@ -1460,6 +1460,17 @@ export default function EconomySimulator() {
                   }}>
                     ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
                   </div>
+                  <div style={{ 
+                    fontSize: 11, 
+                    color: '#6b7280', 
+                    marginTop: 4,
+                    padding: '2px 6px',
+                    background: '#f3f4f6',
+                    borderRadius: 4,
+                    display: 'inline-block'
+                  }}>
+                    Юнит 3 уровня
+                  </div>
                 </div>
                 <div style={{ 
                   background: 'rgba(255,255,255,0.8)',
@@ -1548,8 +1559,8 @@ export default function EconomySimulator() {
               }}>
                 {[
                 { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'AMPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'AMPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f' }
+                { label: 'AMPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 1 уровня' },
+                { label: 'AMPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' }
                 ].map((item, index) => (
                   <div key={index} style={{ 
                     background: 'rgba(255,255,255,0.8)',
@@ -1561,6 +1572,19 @@ export default function EconomySimulator() {
                   }}>
                   <div style={{ fontSize: 12, color: '#86868b', marginBottom: 4 }}>{item.label}</div>
                   <div style={{ fontWeight: 600, fontSize: 18, color: item.color }}>{item.value}</div>
+                  {item.tag && (
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: '#6b7280', 
+                      marginTop: 4,
+                      padding: '2px 6px',
+                      background: '#f3f4f6',
+                      borderRadius: 4,
+                      display: 'inline-block'
+                    }}>
+                      {item.tag}
+                    </div>
+                  )}
                   </div>
                 ))}
           </div>
@@ -1576,7 +1600,7 @@ export default function EconomySimulator() {
                 { label: 'Users', value: `${formatNumber(Math.round(metrics.Users))}`, prev: prevMetrics?.Users },
                 { label: 'AvPrice', value: `$${formatNumber(Math.round(metrics.AvPrice))}`, prev: prevMetrics?.AvPrice },
                 { label: 'COGS', value: `$${formatNumber(Math.round(metrics.COGS))}`, prev: prevMetrics?.COGS },
-                  { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
+                { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
                 { label: 'CPUser', value: `$${formatNumber(Math.round(metrics.CPUser))}`, prev: prevMetrics?.CPUser }
                 ].map((item, index) => {
                   const metricKey = METRIC_DISPLAY_MAP[item.label];
@@ -1591,18 +1615,18 @@ export default function EconomySimulator() {
                     }}>
                     <div style={{ fontSize: 11, color: '#86868b', marginBottom: 2 }}>{item.label}</div>
                     <div style={{ fontWeight: 600, fontSize: 13 }}>{item.value}</div>
-                      {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
+                    {item.prev !== undefined && metricKey && item.prev !== metrics[metricKey] && (
                       <div style={{ fontSize: 10, color: '#86868b', marginTop: 2 }}>
-                          ({typeof item.prev === 'number' ? 
-                            (item.label === 'C1' ? 
-                              `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
-                            `${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(item.prev))} → ${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(metrics[metricKey]))}`
-                            ) : ''})
-          </div>
-        )}
-      </div>
-                    );
-                  })}
+                        ({typeof item.prev === 'number' ? 
+                          (item.label === 'C1' ? 
+                            `${item.prev.toFixed(1)}% → ${metrics.C1.toFixed(1)}%` :
+                          `${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(item.prev))} → ${item.label.includes('$') ? '$' : ''}${formatNumber(Math.round(metrics[metricKey]))}`
+                          ) : ''})
+                      </div>
+                    )}
+                  </div>
+                  );
+                })}
               </div>
 
             {/* Department selection */}
