@@ -929,7 +929,7 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
       if (unit1 > 0 && unit2 > 0 && c1 < 40 && -3 * unit3 < balance) {
         return 'Советуем улучшить первый опыт клиентов: доведите С1 до 40%.';
       }
-      if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
+      if (unit1 > 0 && unit2 > 0  && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
         return 'Пора поработать над себестоимостью: попробуйте договориться с поставщиками или оптимизировать производство, чтобы снизить COGS до $5.';
       }
       if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
