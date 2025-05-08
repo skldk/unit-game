@@ -1034,6 +1034,14 @@ export default function EconomySimulator() {
   const [stepNotificationMessage, setStepNotificationMessage] = useState<string | null>(null);
   const [stepNotificationProfitChange, setStepNotificationProfitChange] = useState<string | null>(null);
   const [showHints, setShowHints] = useState(false);
+  const [shimmerKey, setShimmerKey] = useState(0);
+
+  useEffect(() => {
+    if (turn === 1) {
+      const interval = setInterval(() => setShimmerKey(k => k + 1), 2000);
+      return () => clearInterval(interval);
+    }
+  }, [turn]);
 
   function getRandomInitiatives(initiatives: Initiative[], count: number): Initiative[] {
     const shuffled = [...initiatives].sort(() => 0.5 - Math.random());
@@ -1614,8 +1622,8 @@ export default function EconomySimulator() {
                         key={dep.key} 
                         onClick={() => handleDepartmentSelect(dep.key)} 
                         style={{ 
-                        padding: '12px 16px',
-                        borderRadius: 16,
+                          padding: '12px 16px',
+                          borderRadius: 16,
                           border: '1px solid rgba(0,0,0,0.1)',
                           background: 'rgba(255,255,255,0.8)',
                           backdropFilter: 'blur(20px)',
@@ -1624,21 +1632,45 @@ export default function EconomySimulator() {
                           flexDirection: 'column',
                           alignItems: 'flex-start',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.2s ease',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          zIndex: turn === 1 && dep.key === 'acquisition' ? 2 : 1
                         }}
                       >
-                      <span style={{ fontSize: 24, marginBottom: 4 }}>{dep.icon}</span>
+                        <span style={{ fontSize: 24, marginBottom: 4 }}>{dep.icon}</span>
                         <span style={{ 
                           fontWeight: 600,
-                        fontSize: 15,
+                          fontSize: 15,
                           color: '#1d1d1f',
-                        marginBottom: 4
+                          marginBottom: 4
                         }}>{dep.label}</span>
                         <span style={{ 
-                        fontSize: 11,
+                          fontSize: 11,
                           color: '#86868b',
                           lineHeight: 1.4
                         }}>{dep.desc}</span>
+                        {/* Бегущий shimmer-блик */}
+                        {turn === 1 && dep.key === 'acquisition' && (
+                          <span style={{
+                            position: 'absolute',
+                            top: 0, left: 0, bottom: 0, width: '100%',
+                            pointerEvents: 'none',
+                            zIndex: 3,
+                            overflow: 'hidden',
+                            borderRadius: 16
+                          }}>
+                            <span key={shimmerKey} style={{
+                              display: 'block',
+                              position: 'absolute',
+                              top: 0, left: '-60%',
+                              width: '60%', height: '100%',
+                              background: 'linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+                              filter: 'blur(2px)',
+                              animation: 'shimmer-acq 1.2s linear 0s 1',
+                            }} />
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -1796,3 +1828,25 @@ styleSheet.textContent = `
   }
 `;
 document.head.appendChild(styleSheet);
+
+// В конец файла добавить CSS-анимацию:
+const blinkStyle = document.createElement('style');
+blinkStyle.textContent = `
+@keyframes blink-acq {
+  0% { opacity: 0.2; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+`;
+document.head.appendChild(blinkStyle);
+
+// В конец файла добавить CSS-анимацию shimmer:
+const shimmerStyle = document.createElement('style');
+shimmerStyle.textContent = `
+@keyframes shimmer-acq {
+  0% { left: -60%; }
+  100% { left: 100%; }
+}
+`;
+document.head.appendChild(shimmerStyle);
