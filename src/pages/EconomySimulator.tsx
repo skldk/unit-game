@@ -1016,6 +1016,105 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
   );
 }
 
+function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => void }) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setShow(true), 100);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '32px',
+        borderRadius: '24px',
+        maxWidth: '500px',
+        width: '90%',
+        textAlign: 'center',
+        transform: show ? 'scale(1)' : 'scale(0.9)',
+        opacity: show ? 1 : 0,
+        transition: 'all 0.5s ease-out',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+      }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>💡</div>
+        <h2 style={{ 
+          fontSize: '24px', 
+          marginBottom: '16px',
+          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 700
+        }}>
+          Хотите получать подсказки?
+        </h2>
+        <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
+          После каждого хода вы будете получать советы по улучшению метрик и достижению целей
+        </p>
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px',
+          marginBottom: '24px'
+        }}>
+          <button
+            onClick={() => {
+              setShow(false);
+              setTimeout(() => onSelect(false), 300);
+            }}
+            style={{
+              flex: 1,
+              background: 'white',
+              color: '#1d1d1f',
+              border: '1px solid rgba(0,0,0,0.1)',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+            onMouseLeave={e => e.currentTarget.style.background = 'white'}
+          >
+            Нет, я профи
+          </button>
+          <button
+            onClick={() => {
+              setShow(false);
+              setTimeout(() => onSelect(true), 300);
+            }}
+            style={{
+              flex: 1,
+              background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            Да, хочу
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EconomySimulator() {
   const [metrics, setMetrics] = useState<Metrics>(getInitialMetrics());
   const [turn, setTurn] = useState(1);
@@ -1027,6 +1126,7 @@ export default function EconomySimulator() {
   const [currentInitiatives, setCurrentInitiatives] = useState<Initiative[]>([]);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showHintsPreference, setShowHintsPreference] = useState(false);
   const departmentMeta = department ? DEPARTMENTS.find(dep => dep.key === department) : null;
   const [initiativeChances, setInitiativeChances] = useState<number[]>([]);
   const [balance, setBalance] = useState(30000);
@@ -1169,6 +1269,7 @@ export default function EconomySimulator() {
 
   function handleStartGame() {
     setShowOnboarding(false);
+    setShowHintsPreference(true); // Show hints preference modal after onboarding
   }
 
   function handleRestart() {
@@ -1281,6 +1382,13 @@ export default function EconomySimulator() {
         </div>
       </section>
     );
+  }
+
+  if (showHintsPreference) {
+    return <HintsPreferenceModal onSelect={(showHints) => {
+      setShowHintsPreference(false);
+      setShowHints(showHints);
+    }} />;
   }
 
   return (
