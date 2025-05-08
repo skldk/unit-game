@@ -892,7 +892,7 @@ const METRIC_DISPLAY_MAP: Record<string, keyof Metrics> = {
 
 };
 
-function StepNotification({ message, profitChangeMessage, onClose, metrics, balance, showHints }: { message: string; profitChangeMessage: string; onClose: () => void; metrics: Metrics; balance: number; showHints: boolean }) {
+function StepNotification({ message, profitChangeMessage, onClose, metrics, balance, showHints, turn }: { message: string; profitChangeMessage: string; onClose: () => void; metrics: Metrics; balance: number; showHints: boolean; turn: number }) {
   const [show, setShow] = useState(false);
   const isPositive = profitChangeMessage.includes('вырос');
 
@@ -901,7 +901,7 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
   }, []);
 
   // Определяем поясняющий текст в зависимости от типа сообщения
-  const getExplanationText = (metrics: Metrics, balance: number) => {
+  const getExplanationText = (metrics: Metrics, balance: number, turn: number) => {
     const unit1 = metrics.AMPPU;
     const unit2 = metrics.AMPU - metrics.CPUser;
     const unit3 = metrics.ProfitNet;
@@ -909,29 +909,54 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
     const fixCost = metrics.FixCosts;
     const c1 = metrics.C1;
     const cogs = metrics.COGS;
+    const U = metrics.Users;
+    const d1_1 = (c1*unit1-(cpUser-6))*(U+10000)-fixCost;
+    const d1_2 = (c1*unit1-(cpUser))*(U+8000)-(fixCost+75000);
+    const d2 = (c1*((metrics.AvPrice+30-metrics.COGS))-(cpUser))*(U+1500)-(fixCost);
+    const d3 = (c1*1.2*unit1-(cpUser))*(U)-fixCost;
+    const d4 = (c1*unit1-(cpUser))*(U)-(fixCost-250000);
 
-    if (unit2 < 0 && cpUser > 4) {
-      return 'Юнит 2 в минусе: каждый пользователь — убыток. Снижайте CPUsers через SEO-контент и оптимизацию рекламных кампаний.';
+    if (turn <= 12) {
+      if (unit2 < 0 && cpUser > 4) {
+        return 'Обратите внимание на Юнит 2 уровня: CPUser превышает ARPU. Снизте CPUsers до 4$.';
+      }
+      if (unit2 < 0 && cpUser <= 4) {
+        return 'Юнит 2 уровня требует внимания: давайте вместе выведем его в плюс! Попробуйте сделать CPUsers = 0$';
+      }
+      if (unit1 > 0 && unit2 > 0 && unit3 < 0 && -3 * unit3 > balance && fixCost > 2900) {
+        return 'Оптимизируйте FixCosts: иначе вы скоро потратите все деньги.';
+      }
+      if (unit1 > 0 && unit2 > 0 && c1 < 40 && -3 * unit3 < balance) {
+        return 'Советуем улучшить первый опыт клиентов: доведите С1 до 40%.';
+      }
+      if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
+        return 'Пора поработать над себестоимостью: попробуйте договориться с поставщиками или оптимизировать производство, чтобы снизить COGS до $5.';
+      }
+      if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
+        return 'Отличные показатели! Теперь можете смело масштабироваться — увеличивайте Users до 100000.';
+      }
+      if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs/unit1 < 0.3 && unit1 < 50) {
+        return 'Советуем повышать ценность продукта: повышайте AvPrice до 100$.';
+      }
+      return 'Каждый ваш выбор влияет на развитие компании. Анализируйте метрики и не бойтесь экспериментировать!';
     }
-    if (unit2 < 0 && cpUser <= 4) {
-      return 'Выводите Юнит 2 уровня из убытков. Снижайте CPUsers через SEO и оптимизацию рекламы';
+    
+    if (turn > 12) {
+      const maxVal = Math.max(d1_1, d1_2, d2, d3, d4);
+    
+      if (maxVal === d1_1 || maxVal === d1_2) {
+        return 'Финишная прямая! Используйте накопленные знания для масштабного продвижения.';
+      } 
+      if (maxVal === d2) {
+        return 'Последний рывок! Сделайте ставку на улучшение продукта (ARPPU) — добавьте функцию, которую больше всего ждут клиенты.';
+      }
+      if (maxVal === d3) {
+        return 'Завершающий этап! Уделите внимание онбордингу (C1) — смело оптимизируйте процесс адаптации новых пользователей.';
+      }
+      return 'Финальный этап! Проверьте операционные расходы (FixCosts) — возможно, есть возможность сократить издержки без потери качества.';
     }
-    if (unit1 > 0 && unit2 > 0 && unit3 < 0 && -3 * unit3 > balance && fixCost > 2900) {
-      return 'Оптимизируйте FixCost: риск дефицита бюджета';
-    }
-    if (unit1 > 0 && unit2 > 0 && c1 < 40 && -3 * unit3 < balance ) {
-      return 'Доведите онбординг в первую сессию (С1) до 40%';
-    }
-    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
-      return 'Снизьте COGS продукта до 5$';
-    }
-    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
-      return 'Масштабируйте пользовательскую базу агрессивно';
-    }
-    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs/unit1 < 0.3 && unit1 < 50) {
-      return 'Растите Av.Price: повышайте ценность продукта';
-    }
-    return 'Каждое решение влияет на ключевые метрики бизнеса. Анализируйте результаты и корректируйте стратегию.';
+    
+    return 'Помните: даже небольшие изменения могут дать значительный эффект. Следите за метриками и продолжайте улучшения!';
   };
 
   return (
@@ -1007,7 +1032,7 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
               fontSize: '14px',
               lineHeight: 1.5
             }}>
-              {getExplanationText(metrics, balance)}
+              {getExplanationText(metrics, balance, turn)}
             </div>
             <div style={{
               position: 'absolute',
@@ -1978,6 +2003,7 @@ export default function EconomySimulator() {
           metrics={metrics}
           balance={balance}
           showHints={showHints}
+          turn={turn}
         />
       )}
       {showAchievementModal && (
