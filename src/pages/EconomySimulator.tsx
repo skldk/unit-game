@@ -979,17 +979,36 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
         }}>
           {profitChangeMessage}
         </div>
-        <div style={{ 
-          padding: '16px',
-          background: showHints ? '#f3f4f6' : 'transparent',
-          borderRadius: '12px',
-          marginBottom: '24px',
-          color: '#4b5563',
-          fontSize: '14px',
-          lineHeight: 1.5
-        }}>
-          {showHints ? getExplanationText(metrics, balance) : ''}
-        </div>
+        {showHints && (
+          <div style={{ 
+            padding: '16px',
+            background: '#f8fafc',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            textAlign: 'left',
+            border: '1px solid rgba(0,0,0,0.08)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '8px',
+              color: '#1d1d1f',
+              fontWeight: 600,
+              fontSize: '15px'
+            }}>
+              <span style={{ fontSize: '18px' }}>💡</span>
+              Подсказка
+            </div>
+            <div style={{ 
+              color: '#4b5563',
+              fontSize: '14px',
+              lineHeight: 1.5
+            }}>
+              {getExplanationText(metrics, balance)}
+            </div>
+          </div>
+        )}
         <button
           onClick={() => {
             setShow(false);
