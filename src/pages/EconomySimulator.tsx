@@ -992,13 +992,13 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
     if (unit1 > 0 && unit2 > 0 && c1 < 40 && -3 * unit3 < balance ) {
       return 'Доведите онбординг в первую сессию (С1) до 40%';
     }
-    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5 && cogs/unit1 > 30%) {
+    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
       return 'Снизьте COGS продукта до 5$';
     }
     if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
       return 'Масштабируйте пользовательскую базу агрессивно';
     }
-    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs/unit1 < 30% && unit1 < 50) {
+    if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs/unit1 < 0.3 && unit1 < 50) {
       return 'Растите Av.Price: повышайте ценность продукта';
     }
     return 'Каждое решение влияет на ключевые метрики бизнеса. Анализируйте результаты и корректируйте стратегию.';
