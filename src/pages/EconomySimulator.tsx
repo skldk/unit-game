@@ -220,10 +220,10 @@ type OnboardingStep = {
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: "AI Mail Master: Революция рабочих коммуникаций",
+    title: "InboxMind: Революция рабочих коммуникаций",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p>Вы — CEO стартапа FutureInbox, создающего первый ИИ-почтовый сервис уровня SuperHuman для бизнеса.</p>
+        <p>Вы — CEO стартапа, создающего первый ИИ-почтовый сервис уровня SuperHuman для бизнеса.</p>
         <p>Ваш продукт — InboxMind — это не клиент для писем, а цифровой секретарь с ИИ, который:</p>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           <li>✉️ <b>Автоматизирует рутину:</b> сортирует письма, генерирует ответы, выделяет срочные задачи</li>
@@ -1566,35 +1566,7 @@ export default function EconomySimulator() {
                 gridTemplateColumns: '1fr 1fr',
               gap: 16
               }}>
-                <div style={{ 
-                  background: 'rgba(255,255,255,0.8)',
-                borderRadius: 20,
-                padding: 16,
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(0,0,0,0.1)'
-                }}>
-                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Profit Net / Цель $50 000</div>
-                  <div style={{ 
-                    fontWeight: 600, 
-                  fontSize: 24,
-                    letterSpacing: '-0.02em',
-                    color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f'
-                  }}>
-                    ${Math.round(metrics.ProfitNet).toLocaleString('ru-RU')}
-                  </div>
-                  <div style={{ 
-                    fontSize: 11, 
-                    color: '#6b7280', 
-                    marginTop: 4,
-                    padding: '2px 6px',
-                    background: '#f3f4f6',
-                    borderRadius: 4,
-                    display: 'inline-block'
-                  }}>
-                    Юнит 3 уровня
-                  </div>
-                </div>
+
                 <div style={{ 
                   background: 'rgba(255,255,255,0.8)',
                 borderRadius: 20,
@@ -1613,6 +1585,38 @@ export default function EconomySimulator() {
                   ${formatNumber(Math.round(balance))}
                   </div>
                 </div>
+
+
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.8)',
+                borderRadius: 20,
+                padding: 16,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(0,0,0,0.1)'
+                }}>
+                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}> Цель Profit Net $50 000</div>
+                  <div style={{ 
+                    fontWeight: 600, 
+                  fontSize: 24,
+                    letterSpacing: '-0.02em',
+                    color: (() => {
+                      const progress = metrics.ProfitNet < 0 ? 0 : (metrics.ProfitNet / 50000) * 100;
+                      if (progress >= 100) return '#34c759'; // зеленый
+                      if (progress >= 70) return '#ff9500'; // оранжевый
+                      if (progress >= 30) return '#ffcc00'; // желтый
+                      return '#ff3b30'; // красный
+                    })()
+                  }}>
+                    {metrics.ProfitNet < 0 ? '0%' : `${Math.round((metrics.ProfitNet / 50000) * 100)}%`}
+                  </div>
+                </div>
+
+
+
+                
+
+
               </div>
 
             {/* Chart */}
@@ -1681,9 +1685,10 @@ export default function EconomySimulator() {
               gap: 8
               }}>
                 {[
-                { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
+              // { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
                 { label: 'ARPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 1 уровня' },
-                { label: 'ARPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' }
+                { label: 'ARPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' },
+                { label: 'Profit Net', value: `$${formatNumber(Math.round(metrics.ProfitNet))}`, color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 3 уровня' }
                 ].map((item, index) => (
                   <div key={index} style={{ 
                     background: 'rgba(255,255,255,0.8)',
@@ -1719,12 +1724,13 @@ export default function EconomySimulator() {
               gap: 6
               }}>
                 {[
-                { label: 'Fix Costs', value: `$${formatNumber(Math.round(metrics.FixCosts))}`, prev: prevMetrics?.FixCosts },
-                { label: 'Users', value: `${formatNumber(Math.round(metrics.Users))}`, prev: prevMetrics?.Users },
-                { label: 'AvPrice', value: `$${formatNumber(Math.round(metrics.AvPrice))}`, prev: prevMetrics?.AvPrice },
+                 { label: 'AvPrice', value: `$${formatNumber(Math.round(metrics.AvPrice))}`, prev: prevMetrics?.AvPrice },
                 { label: 'COGS', value: `$${formatNumber(Math.round(metrics.COGS))}`, prev: prevMetrics?.COGS },
                 { label: 'C1', value: `${metrics.C1.toFixed(1)}%`, prev: prevMetrics?.C1 },
-                { label: 'CPUser', value: `$${formatNumber(Math.round(metrics.CPUser))}`, prev: prevMetrics?.CPUser }
+                { label: 'CPUser', value: `$${formatNumber(Math.round(metrics.CPUser))}`, prev: prevMetrics?.CPUser },
+                { label: 'Fix Costs', value: `$${formatNumber(Math.round(metrics.FixCosts))}`, prev: prevMetrics?.FixCosts },
+                { label: 'Users', value: `${formatNumber(Math.round(metrics.Users))}`, prev: prevMetrics?.Users }
+               
                 ].map((item, index) => {
                   const metricKey = METRIC_DISPLAY_MAP[item.label];
                   return (
