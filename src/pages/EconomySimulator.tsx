@@ -236,7 +236,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         <div style={{ marginBottom: 16 }}>
           <p style={{ fontWeight: 600, color: '#ef4444' }}>💸 Убытки на клиента:</p>
           <p>COGS = $15 (серверы ИИ + шифрование) при цене подписки $20</p>
-          <p>AMPU = -$3 (платите за пользователей, а не зарабатываете!)</p>
+          <p>ARPU = -$3 (платите за пользователей, а не зарабатываете!)</p>
         </div>
         <div style={{ marginBottom: 16 }}>
           <p style={{ fontWeight: 600, color: '#ef4444' }}>📉 Кризис доверия:</p>
@@ -295,7 +295,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
               <li>Users = 200</li>
               <li>AvPrice = $20</li>
               <li>COGS = $15</li>
-              <li>AMPU-CPUsers = -$18</li>
+              <li>ARPU-CPUsers = -$18</li>
             </ul>
           </div>
         </div>
@@ -317,7 +317,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         <p style={{ marginBottom: 12 }}>В этой игре вы будете развивать навык работы с юнит-экономикой.</p>
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: 12 }}>
           <li>• Есть несколько уровней юнитов — их нужно последовательно делать прибыльными.</li>
-          <li>• На старте юнит 1 уровня (AMPPU) прибыльный, юнит 2 уровня (AMPU - CPUser) важно вывести в плюс.</li>
+          <li>• На старте юнит 1 уровня (ARPPU) прибыльный, юнит 2 уровня (ARPU - CPUser) важно вывести в плюс.</li>
           <li>• Пока юниты в минусе — каждый новый пользователь приносит убыток.</li>
           <li>• Для роста юнита 3 уровня (Profit Net) — пользуйтесь подсказками и оптимизируйте расходы.</li>
         </ul>
@@ -1507,8 +1507,8 @@ export default function EconomySimulator() {
               }}>
                 {[
                 { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'AMPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 1 уровня' },
-                { label: 'AMPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' }
+                { label: 'ARPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 1 уровня' },
+                { label: 'ARPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' }
                 ].map((item, index) => (
                   <div key={index} style={{ 
                     background: 'rgba(255,255,255,0.8)',
