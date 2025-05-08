@@ -36,11 +36,18 @@ type Initiative = {
 type Department = 'acquisition' | 'product' | 'onboarding' | 'admin';
 
 const DEPARTMENTS: { key: Department; label: string; icon: string; desc: string }[] = [
+  /* КАК БЫЛО РАНЬШЕ
   { key: 'acquisition', label: 'Привлечение', icon: '📈', desc: 'Влияет на: Users, C1, CPUser. Основные задачи: снижение CPUser, повышение релевантности трафика.' },
   { key: 'product', label: 'Продукт', icon: '🛠️', desc: 'Влияет на: AvPrice, COGS. Основные задачи: увеличение ценности продукта, снижение себестоимости.' },
   { key: 'onboarding', label: 'Онбординг', icon: '🎓', desc: 'Влияет на: C1. Основные задачи: улучшение конверсии через адаптацию клиентов.' },
   { key: 'admin', label: 'Админ', icon: '🏢', desc: 'Влияет на: FixCosts. Основные задачи: оптимизация постоянных расходов.' },
-];
+  */
+  { key: 'acquisition', label: 'Привлечение', icon: '📈', desc: 'CPUsers↓ от -4$ до -17$\nUsers↑ от 100 до 10 000' },
+  { key: 'product', label: 'Продукт', icon: '🛠️', desc: 'COGS↓ от -3$ до -10$\nAvPrice↑ от $2 до $30' },
+  { key: 'onboarding', label: 'Онбординг', icon: '🎓', desc: 'C1↑ от 15% до 120%' },
+  { key: 'admin', label: 'Админ', icon: '🏢', desc: 'FixCosts↓ от -900$\nдо -20 000$' },
+  
+  ];
 
 const INITIATIVES: Record<Department, Initiative[]> = {
   acquisition: 
@@ -1648,7 +1655,9 @@ export default function EconomySimulator() {
                         <span style={{ 
                           fontSize: 11,
                           color: '#86868b',
-                          lineHeight: 1.4
+                          lineHeight: 1.4,
+                          textAlign: 'left',
+                          whiteSpace: 'pre-line'
                         }}>{dep.desc}</span>
                         {/* Бегущий shimmer-блик */}
                         {turn === 1 && dep.key === 'acquisition' && (
