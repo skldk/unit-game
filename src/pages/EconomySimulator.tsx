@@ -986,7 +986,9 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
             borderRadius: '12px',
             marginBottom: '24px',
             textAlign: 'left',
-            border: '1px solid rgba(0,0,0,0.08)'
+            border: '1px solid rgba(0,0,0,0.08)',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
             <div style={{
               display: 'flex',
@@ -1006,6 +1008,27 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
               lineHeight: 1.5
             }}>
               {getExplanationText(metrics, balance)}
+            </div>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '-60%',
+                width: '60%',
+                height: '100%',
+                background: 'linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+                filter: 'blur(2px)',
+                animation: 'shimmer-acq 1.2s linear 0s 1',
+                //animationDelay: '7s'
+              }} />
             </div>
           </div>
         )}
