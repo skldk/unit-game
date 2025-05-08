@@ -1042,6 +1042,7 @@ export default function EconomySimulator() {
   const [stepNotificationProfitChange, setStepNotificationProfitChange] = useState<string | null>(null);
   const [showHints, setShowHints] = useState(false);
   const [shimmerKey, setShimmerKey] = useState(0);
+  const [showTacticsModal, setShowTacticsModal] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1323,7 +1324,7 @@ export default function EconomySimulator() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
-             InboxMind - AI Mail Master
+             InboxMind
             </h2>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
@@ -1342,6 +1343,23 @@ export default function EconomySimulator() {
                 }}
               >
                 🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+              </button>
+              <button
+                onClick={() => setShowTacticsModal(true)}
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 500
+                }}
+              >
+                📋 Тактика
               </button>
               <button
                 onClick={() => setShowHints(v => !v)}
@@ -1817,6 +1835,65 @@ export default function EconomySimulator() {
           achievement={newAchievement}
           onClose={() => setNewAchievement(null)}
         />
+      )}
+      {showTacticsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '32px',
+            borderRadius: '24px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'left',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowTacticsModal(false)}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                fontSize: 24,
+                cursor: 'pointer',
+                color: '#86868b'
+              }}
+            >✕</button>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>Тактика: как выигрывать через юнит-экономику</h2>
+            {/* Контент из онбординга тактика */}
+            <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+              <p style={{ marginBottom: 12 }}>В этой игре вы будете развивать навык работы с юнит-экономикой.</p>
+              <ul style={{ listStyle: 'none', padding: 0, marginBottom: 12 }}>
+                <li>• Есть несколько уровней юнитов — их нужно последовательно делать прибыльными.</li>
+                <li>• На старте юнит 1 уровня (ARPPU) прибыльный, юнит 2 уровня (ARPU - CPUser) важно вывести в плюс.</li>
+                <li>• Пока юниты в минусе — каждый новый пользователь приносит убыток.</li>
+                <li>• Для роста юнита 3 уровня (Profit Net) — пользуйтесь подсказками и оптимизируйте расходы.</li>
+              </ul>
+              <div style={{ background: '#f3f4f6', borderRadius: 8, padding: 12, fontSize: 15, marginTop: 16 }}>
+                <b>Общая тактика:</b> <br />
+                1. Сначала делайте прибыльными юнит 1 и 2 уровня.<br />
+                2. Затем масштабируйте пользователей и оптимизируйте юнит 3 уровня.<br />
+                3. Следите за подсказками — они помогут выйти в плюс!<br />
+                <div style={{ marginTop: 14, background: '#fffbe6', color: '#b45309', borderRadius: 6, padding: '8px 12px', fontWeight: 600, fontSize: 16, border: '1px solid #fde68a' }}>
+                  Ваше первое задание — <span style={{ color: '#d97706' }}>сократить CPUsers до 4$</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
