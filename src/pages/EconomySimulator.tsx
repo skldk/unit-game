@@ -1612,10 +1612,10 @@ export default function EconomySimulator() {
                     Выберите направление
                   </div>
                   </div>
-                  <div style={{ 
+                  <div className="mobile-horizontal-row" style={{ 
                     display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 8
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 8
                   }}>
                     {DEPARTMENTS.map(dep => (
                       <button 
@@ -1717,10 +1717,10 @@ export default function EconomySimulator() {
                     <span style={{ fontSize: 15 }}>{DEPARTMENTS.find(d => d.key === department)?.label}</span>
                   </div>
                   </div>
-                  <div style={{ 
+                  <div className="mobile-horizontal-row" style={{ 
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 8
+                    gap: 8
                   }}>
                     {currentInitiatives.map((ini, idx) => (
                       <button 
@@ -1850,3 +1850,103 @@ shimmerStyle.textContent = `
 }
 `;
 document.head.appendChild(shimmerStyle);
+
+// В конец файла добавить CSS для мобильной адаптивности
+const mobileStyle = document.createElement('style');
+mobileStyle.textContent = `
+@media (max-width: 600px) {
+  section, .main-game-section {
+    max-width: 100vw !important;
+    padding: 8px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .main-game-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .metrics-row, .metrics-grid, .metrics-detailed {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+  .metrics-row > div, .metrics-grid > div, .metrics-detailed > div {
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 18px !important;
+    padding: 8px !important;
+  }
+  .departments-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    margin-bottom: 8px !important;
+  }
+  .departments-row > button {
+    min-width: 140px !important;
+    flex: 0 0 auto !important;
+    font-size: 15px !important;
+    padding: 10px 8px !important;
+  }
+  .main-numbers {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    margin-bottom: 4px !important;
+  }
+  .chart-row {
+    height: 100px !important;
+    min-height: 80px !important;
+    margin-bottom: 8px !important;
+  }
+  .header-row {
+    flex-direction: column !important;
+    gap: 4px !important;
+    align-items: flex-start !important;
+  }
+  .header-row button {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+  .mobile-horizontal-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 2px !important;
+  }
+  .mobile-horizontal-row > button {
+    min-width: 180px !important;
+    flex: 0 0 auto !important;
+    font-size: 15px !important;
+    padding: 12px 10px !important;
+  }
+}
+`;
+document.head.appendChild(mobileStyle);
+
+// В конец файла скорректировать CSS для мобильной версии:
+mobileStyle.textContent += `
+@media (max-width: 600px) {
+  .mobile-horizontal-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    overflow-x: unset !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 2px !important;
+  }
+  .mobile-horizontal-row > button {
+    min-width: 0 !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    font-size: 15px !important;
+    padding: 12px 10px !important;
+  }
+}
+`;
