@@ -1280,7 +1280,7 @@ export default function EconomySimulator() {
       }}>
         <div style={{ marginBottom: 48 }}>
           <h1 style={{ 
-            fontSize: 56, 
+            fontSize: 28, 
             fontWeight: 700, 
             marginBottom: 32,
             background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
