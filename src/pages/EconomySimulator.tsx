@@ -1182,6 +1182,16 @@ function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => 
   );
 }
 
+// Добавить тип LeaderboardEntry, если его нет
+
+type LeaderboardEntry = {
+  id: string;
+  nickname: string;
+  profitNet: number;
+  date: string;
+  isCurrentPlayer?: boolean;
+};
+
 export default function EconomySimulator() {
   const [metrics, setMetrics] = useState<Metrics>(getInitialMetrics());
   const [turn, setTurn] = useState(1);
@@ -1210,6 +1220,14 @@ export default function EconomySimulator() {
   const [showHints, setShowHints] = useState(false);
   const [shimmerKey, setShimmerKey] = useState(0);
   const [showTacticsModal, setShowTacticsModal] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState<number | null>(null);
+  const [pendingVictory, setPendingVictory] = useState(false);
+  const [pendingProfitNet, setPendingProfitNet] = useState<number | null>(null);
+  const [pendingVictoryMetrics, setPendingVictoryMetrics] = useState<Metrics | null>(null);
+  const [nickname, setNickname] = useState('');
 
   useEffect(() => {
     if (turn === 1) {
@@ -1314,6 +1332,7 @@ export default function EconomySimulator() {
       setGameOver(true);
       setIsVictory(true);
       setMessage('Победа! Profit Net ≥ $50,000 к 15-му ходу');
+      handleVictory(m);
     } else if (newBalance < 0) {
       setGameOver(true);
       setIsVictory(false);
@@ -1371,6 +1390,58 @@ export default function EconomySimulator() {
     
     setAchievements(newAchievements);
   }, [metrics, prevMetrics, turn]);
+
+  // Загрузка таблицы лидеров из localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('leaderboard');
+    if (saved) setLeaderboard(JSON.parse(saved));
+  }, []);
+
+  // Победа: показываем VictoryModal, а затем — если в ТОП-10 — NicknameInputModal
+  useEffect(() => {
+    if (pendingVictory && pendingProfitNet !== null && pendingVictoryMetrics) {
+      // Проверяем попадание в ТОП-10
+      const sorted = [...leaderboard].sort((a, b) => b.profitNet - a.profitNet);
+      const position = sorted.findIndex(entry => pendingProfitNet > entry.profitNet);
+      const isTop10 = position !== -1 || sorted.length < 10;
+      if (isTop10) {
+        setCurrentPosition(position === -1 ? sorted.length + 1 : position + 1);
+        setShowNicknameModal(true);
+      }
+      setPendingVictory(false);
+    }
+  }, [pendingVictory, pendingProfitNet, pendingVictoryMetrics, leaderboard]);
+
+  // При победе — запоминаем метрики и ProfitNet
+  function handleVictory(metrics: Metrics) {
+    setPendingVictory(true);
+    setPendingProfitNet(metrics.ProfitNet);
+    setPendingVictoryMetrics(metrics);
+  }
+
+  // После ввода ника — добавляем в таблицу и показываем LeaderboardModal
+  function handleNicknameSubmit(nickname: string) {
+    if (pendingProfitNet === null || !pendingVictoryMetrics) return;
+    const newEntry: LeaderboardEntry = {
+      id: Date.now().toString(),
+      nickname,
+      profitNet: pendingProfitNet,
+      date: new Date().toISOString(),
+      isCurrentPlayer: true
+    };
+    const sorted = [...leaderboard].sort((a, b) => b.profitNet - a.profitNet);
+    const position = sorted.findIndex(entry => pendingProfitNet > entry.profitNet);
+    if (position !== -1) {
+      sorted.splice(position, 0, newEntry);
+    } else {
+      sorted.push(newEntry);
+    }
+    const updated = sorted.slice(0, 10).map(e => ({ ...e, isCurrentPlayer: e.id === newEntry.id }));
+    setLeaderboard(updated);
+    localStorage.setItem('leaderboard', JSON.stringify(updated));
+    setShowNicknameModal(false);
+    setShowLeaderboardModal(true);
+  }
 
   if (showOnboarding) {
     return (
@@ -1989,7 +2060,9 @@ export default function EconomySimulator() {
           </div>
         </section>
       </div>
-      {gameOver && isVictory && <VictoryModal onRestart={handleRestart} metrics={metrics} />}
+      {gameOver && isVictory && pendingVictoryMetrics && (
+        <VictoryModal onRestart={handleRestart} metrics={pendingVictoryMetrics} />
+      )}
       {gameOver && !isVictory && <DefeatModal onRestart={handleRestart} metrics={metrics} />}
       {showStepNotification && message && profitChangeMessage && !gameOver && (
         <StepNotification 
@@ -2074,6 +2147,167 @@ export default function EconomySimulator() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {showNicknameModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '32px',
+            borderRadius: '24px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            transform: 'scale(1)',
+            opacity: 1,
+            transition: 'all 0.5s ease-out'
+          }}>
+            <div style={{ fontSize: '64px', marginBottom: '24px' }}>🏆</div>
+            <h2 style={{
+              fontSize: '24px',
+              marginBottom: '16px',
+              background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700
+            }}>
+              Поздравляем!
+            </h2>
+            <p style={{ fontSize: '16px', marginBottom: '16px', color: '#1d1d1f' }}>
+              Ваш результат попал в ТОП-10 игроков и занял <b>{currentPosition}-е место</b>!
+            </p>
+            <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>Введите ваш никнейм:</p>
+            <input
+              type="text"
+              maxLength={20}
+              style={{
+                width: '100%',
+                padding: 12,
+                fontSize: 16,
+                marginBottom: 24,
+                borderRadius: 8,
+                border: '1px solid #e5e7eb',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              value={nickname}
+              onChange={e => setNickname(e.target.value)}
+              placeholder="Ваш никнейм"
+            />
+            <button
+              style={{
+                width: '100%',
+                padding: '12px 0',
+                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: 0
+              }}
+              onClick={() => handleNicknameSubmit(nickname || 'Игрок')}
+              disabled={!nickname.trim()}
+            >
+              Сохранить
+            </button>
+          </div>
+        </div>
+      )}
+      {showLeaderboardModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '32px',
+            borderRadius: '24px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            transform: 'scale(1)',
+            opacity: 1,
+            transition: 'all 0.5s ease-out'
+          }}>
+            <div style={{ fontSize: '64px', marginBottom: '24px' }}>🏆</div>
+            <h2 style={{
+              fontSize: '24px',
+              marginBottom: '16px',
+              background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700
+            }}>
+              Турнирная таблица
+            </h2>
+            <ol style={{
+              padding: 0,
+              margin: 0,
+              listStyle: 'none',
+              marginBottom: 24
+            }}>
+              {leaderboard.map((entry, idx) => (
+                <li
+                  key={entry.id}
+                  style={{
+                    background: entry.isCurrentPlayer ? '#e0f2fe' : 'transparent',
+                    fontWeight: entry.isCurrentPlayer ? 700 : 400,
+                    padding: '10px 0',
+                    borderRadius: 8,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: 16,
+                    color: entry.isCurrentPlayer ? '#2563eb' : '#1d1d1f',
+                    marginBottom: 2
+                  }}
+                >
+                  <span>{idx + 1}. {entry.nickname}</span>
+                  <span>${formatNumber(Math.round(entry.profitNet))}</span>
+                </li>
+              ))}
+            </ol>
+            <button
+              style={{
+                width: '100%',
+                padding: '12px 0',
+                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: 0
+              }}
+              onClick={() => setShowLeaderboardModal(false)}
+            >
+              Закрыть
+            </button>
           </div>
         </div>
       )}
