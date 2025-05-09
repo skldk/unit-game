@@ -1228,6 +1228,8 @@ export default function EconomySimulator() {
   const [pendingProfitNet, setPendingProfitNet] = useState<number | null>(null);
   const [pendingVictoryMetrics, setPendingVictoryMetrics] = useState<Metrics | null>(null);
   const [nickname, setNickname] = useState('');
+  const fireworksRef = useRef<HTMLDivElement | null>(null);
+  const fireworksInstance = useRef<any>(null);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1235,6 +1237,33 @@ export default function EconomySimulator() {
       return () => clearInterval(interval);
     }
   }, [turn]);
+
+  useEffect(() => {
+    if (showNicknameModal && fireworksRef.current) {
+      fireworksInstance.current = new Fireworks(fireworksRef.current, {
+        rocketsPoint: { min: 20, max: 80 },
+        hue: { min: 0, max: 360 },
+        delay: { min: 15, max: 30 },
+        // speed: 2, // удалено для устранения ошибки
+        acceleration: 1.02,
+        friction: 0.96,
+        gravity: 1.5,
+        particles: 90,
+        // trace: 5, // удалено для устранения ошибки
+        explosion: 6,
+        autoresize: true,
+        brightness: { min: 50, max: 80 },
+        decay: { min: 0.015, max: 0.03 },
+        mouse: { click: false, move: false, max: 0 }
+      });
+      fireworksInstance.current.start();
+      return () => {
+        fireworksInstance.current && fireworksInstance.current.stop();
+      };
+    } else if (!showNicknameModal && fireworksInstance.current) {
+      fireworksInstance.current.stop();
+    }
+  }, [showNicknameModal]);
 
   function getRandomInitiatives(initiatives: Initiative[], count: number): Initiative[] {
     const shuffled = [...initiatives].sort(() => 0.5 - Math.random());
@@ -1296,7 +1325,7 @@ export default function EconomySimulator() {
     // Добавляем сообщение об изменении Profit Net
     const profitNetChange = m.ProfitNet - metrics.ProfitNet;
     if (Math.abs(profitNetChange) > 0.01) { // Проверяем, что изменение существенное
-      const changeText = formatNumber(Math.abs(profitNetChange));
+      const changeText = formatNumber(Math.round(Math.abs(profitNetChange)));
       if (profitNetChange > 0) {
         setProfitChangeMessage(`Profit Net вырос на $${changeText}`);
       } else {
@@ -2163,6 +2192,16 @@ export default function EconomySimulator() {
           alignItems: 'center',
           zIndex: 1000
         }}>
+          {/* Fireworks canvas */}
+          <div ref={fireworksRef} style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1001
+          }} />
           <div style={{
             background: 'white',
             padding: '32px',
@@ -2173,7 +2212,8 @@ export default function EconomySimulator() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             transform: 'scale(1)',
             opacity: 1,
-            transition: 'all 0.5s ease-out'
+            transition: 'all 0.5s ease-out',
+            zIndex: 1002
           }}>
             <div style={{ fontSize: '64px', marginBottom: '24px' }}>🏆</div>
             <h2 style={{
