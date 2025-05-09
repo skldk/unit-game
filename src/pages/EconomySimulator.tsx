@@ -1469,18 +1469,27 @@ export default function EconomySimulator() {
       isCurrentPlayer: true
     };
 
-    const addedEntry = await addToLeaderboard(newEntry);
-    if (addedEntry) {
-      // Обновляем локальную таблицу лидеров
-      const updatedLeaderboard = [...leaderboard];
-      if (leaderboard.length >= 10) {
-        // Удаляем последний результат, если таблица полная
-        updatedLeaderboard.pop();
+    try {
+      console.log('Attempting to add entry to leaderboard:', newEntry);
+      const addedEntry = await addToLeaderboard(newEntry);
+      console.log('Leaderboard API response:', addedEntry);
+      
+      if (addedEntry) {
+        // Обновляем локальную таблицу лидеров
+        const updatedLeaderboard = [...leaderboard];
+        if (leaderboard.length >= 10) {
+          // Удаляем последний результат, если таблица полная
+          updatedLeaderboard.pop();
+        }
+        updatedLeaderboard.push(addedEntry);
+        // Сортируем по убыванию Profit Net
+        updatedLeaderboard.sort((a, b) => b.profitNet - a.profitNet);
+        setLeaderboard(updatedLeaderboard);
+      } else {
+        console.error('Failed to add entry to leaderboard: No response from API');
       }
-      updatedLeaderboard.push(addedEntry);
-      // Сортируем по убыванию Profit Net
-      updatedLeaderboard.sort((a, b) => b.profitNet - a.profitNet);
-      setLeaderboard(updatedLeaderboard);
+    } catch (error) {
+      console.error('Error in handleNicknameSubmit:', error);
     }
 
     setShowNicknameModal(false);
