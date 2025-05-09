@@ -1,3 +1,4 @@
+
 import Airtable from 'airtable';
 
 // Инициализация Airtable с Personal Access Token
@@ -6,7 +7,7 @@ const base = new Airtable({
   endpointUrl: 'https://api.airtable.com'
 }).base(process.env.REACT_APP_AIRTABLE_BASE_ID || '');
 
-const TABLE_NAME = 'Leaderboard';
+const TABLE_NAME = 'Leaderboard'; // 
 
 export type LeaderboardEntry = {
   id: string;
