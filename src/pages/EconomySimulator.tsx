@@ -1603,6 +1603,23 @@ export default function EconomySimulator() {
             </h2>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
+                onClick={() => setShowLeaderboardModal(true)}
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  marginRight: '0'
+                }}
+              >
+                🏆 ТОП-10
+              </button>
+              <button
                 onClick={() => setShowAchievementModal(true)}
                 style={{
                   background: 'none',
@@ -1617,7 +1634,7 @@ export default function EconomySimulator() {
                   marginRight: '0'
                 }}
               >
-                🏆 Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+                ⭐️ Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
               </button>
               <button
                 onClick={() => setShowTacticsModal(true)}
