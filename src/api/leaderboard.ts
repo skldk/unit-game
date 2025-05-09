@@ -2,7 +2,8 @@ import Airtable from 'airtable';
 
 // Инициализация Airtable с Personal Access Token
 const base = new Airtable({
-  apiKey: process.env.REACT_APP_AIRTABLE_PERSONAL_ACCESS_TOKEN
+  apiKey: process.env.REACT_APP_AIRTABLE_PERSONAL_ACCESS_TOKEN,
+  endpointUrl: 'https://api.airtable.com'
 }).base(process.env.REACT_APP_AIRTABLE_BASE_ID || '');
 
 const TABLE_NAME = 'Leaderboard';
