@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { Fireworks } from 'fireworks-js';
+import { getLeaderboard, addToLeaderboard, type LeaderboardEntry } from '../api/leaderboard';
 
 function formatNumber(value: number) {
   return value.toLocaleString('ru-RU');
@@ -1184,14 +1185,6 @@ function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => 
 
 // Добавить тип LeaderboardEntry, если его нет
 
-type LeaderboardEntry = {
-  id: string;
-  nickname: string;
-  profitNet: number;
-  date: string;
-  isCurrentPlayer?: boolean;
-};
-
 export default function EconomySimulator() {
   const [metrics, setMetrics] = useState<Metrics>(getInitialMetrics());
   const [turn, setTurn] = useState(1);
@@ -1230,6 +1223,7 @@ export default function EconomySimulator() {
   const [nickname, setNickname] = useState('');
   const fireworksRef = useRef<HTMLDivElement | null>(null);
   const fireworksInstance = useRef<any>(null);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1420,10 +1414,20 @@ export default function EconomySimulator() {
     setAchievements(newAchievements);
   }, [metrics, prevMetrics, turn]);
 
-  // Загрузка таблицы лидеров из localStorage
+  // Загрузка таблицы лидеров из API
   useEffect(() => {
-    const saved = localStorage.getItem('leaderboard');
-    if (saved) setLeaderboard(JSON.parse(saved));
+    async function loadLeaderboard() {
+      setIsLoadingLeaderboard(true);
+      try {
+        const data = await getLeaderboard();
+        setLeaderboard(data);
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+      } finally {
+        setIsLoadingLeaderboard(false);
+      }
+    }
+    loadLeaderboard();
   }, []);
 
   // Победа: показываем VictoryModal, а затем — если в ТОП-10 — NicknameInputModal
@@ -1442,32 +1446,43 @@ export default function EconomySimulator() {
   }, [pendingVictory, pendingProfitNet, pendingVictoryMetrics, leaderboard]);
 
   // При победе — запоминаем метрики и ProfitNet
-  function handleVictory(metrics: Metrics) {
-    setPendingVictory(true);
-    setPendingProfitNet(metrics.ProfitNet);
+  async function handleVictory(metrics: Metrics) {
     setPendingVictoryMetrics(metrics);
+    setGameOver(true);
+    setIsVictory(true);
+    setShowFireworks(true);
+
+    // Проверяем, попадает ли результат в топ-10
+    const lowestScore = leaderboard.length > 0 ? Math.min(...leaderboard.map(entry => entry.profitNet)) : 0;
+    if (leaderboard.length < 10 || metrics.ProfitNet > lowestScore) {
+      setShowNicknameModal(true);
+    }
   }
 
-  // После ввода ника — добавляем в таблицу и показываем LeaderboardModal
-  function handleNicknameSubmit(nickname: string) {
-    if (pendingProfitNet === null || !pendingVictoryMetrics) return;
-    const newEntry: LeaderboardEntry = {
-      id: Date.now().toString(),
+  // Обновляем функцию handleNicknameSubmit для использования API
+  async function handleNicknameSubmit(nickname: string) {
+    if (!pendingVictoryMetrics) return;
+
+    const newEntry = {
       nickname,
-      profitNet: pendingProfitNet,
-      date: new Date().toISOString(),
+      profitNet: pendingVictoryMetrics.ProfitNet,
       isCurrentPlayer: true
     };
-    const sorted = [...leaderboard].sort((a, b) => b.profitNet - a.profitNet);
-    const position = sorted.findIndex(entry => pendingProfitNet > entry.profitNet);
-    if (position !== -1) {
-      sorted.splice(position, 0, newEntry);
-    } else {
-      sorted.push(newEntry);
+
+    const addedEntry = await addToLeaderboard(newEntry);
+    if (addedEntry) {
+      // Обновляем локальную таблицу лидеров
+      const updatedLeaderboard = [...leaderboard];
+      if (leaderboard.length >= 10) {
+        // Удаляем последний результат, если таблица полная
+        updatedLeaderboard.pop();
+      }
+      updatedLeaderboard.push(addedEntry);
+      // Сортируем по убыванию Profit Net
+      updatedLeaderboard.sort((a, b) => b.profitNet - a.profitNet);
+      setLeaderboard(updatedLeaderboard);
     }
-    const updated = sorted.slice(0, 10).map(e => ({ ...e, isCurrentPlayer: e.id === newEntry.id }));
-    setLeaderboard(updated);
-    localStorage.setItem('leaderboard', JSON.stringify(updated));
+
     setShowNicknameModal(false);
     setShowLeaderboardModal(true);
   }
@@ -2321,50 +2336,56 @@ export default function EconomySimulator() {
             }}>
               Турнирная таблица
             </h2>
-            <ol style={{
-              padding: 0,
-              margin: 0,
-              listStyle: 'none',
-              marginBottom: 24
-            }}>
-              {leaderboard.map((entry, idx) => (
-                <li
-                  key={entry.id}
+            {isLoadingLeaderboard ? (
+              <div style={{ padding: '20px', color: '#666' }}>Загрузка результатов...</div>
+            ) : (
+              <>
+                <ol style={{
+                  padding: 0,
+                  margin: 0,
+                  listStyle: 'none',
+                  marginBottom: 24
+                }}>
+                  {leaderboard.map((entry, idx) => (
+                    <li
+                      key={entry.id}
+                      style={{
+                        background: entry.isCurrentPlayer ? '#e0f2fe' : 'transparent',
+                        fontWeight: entry.isCurrentPlayer ? 700 : 400,
+                        padding: '10px 0',
+                        borderRadius: 8,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: 16,
+                        color: entry.isCurrentPlayer ? '#2563eb' : '#1d1d1f',
+                        marginBottom: 2
+                      }}
+                    >
+                      <span>{idx + 1}. {entry.nickname}</span>
+                      <span>${formatNumber(Math.round(entry.profitNet))}</span>
+                    </li>
+                  ))}
+                </ol>
+                <button
                   style={{
-                    background: entry.isCurrentPlayer ? '#e0f2fe' : 'transparent',
-                    fontWeight: entry.isCurrentPlayer ? 700 : 400,
-                    padding: '10px 0',
+                    width: '100%',
+                    padding: '12px 0',
+                    background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                    color: 'white',
+                    border: 'none',
                     borderRadius: 8,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
                     fontSize: 16,
-                    color: entry.isCurrentPlayer ? '#2563eb' : '#1d1d1f',
-                    marginBottom: 2
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    marginBottom: 0
                   }}
+                  onClick={() => setShowLeaderboardModal(false)}
                 >
-                  <span>{idx + 1}. {entry.nickname}</span>
-                  <span>${formatNumber(Math.round(entry.profitNet))}</span>
-                </li>
-              ))}
-            </ol>
-            <button
-              style={{
-                width: '100%',
-                padding: '12px 0',
-                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 8,
-                fontSize: 16,
-                fontWeight: 600,
-                cursor: 'pointer',
-                marginBottom: 0
-              }}
-              onClick={() => setShowLeaderboardModal(false)}
-            >
-              Закрыть
-            </button>
+                  Закрыть
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
