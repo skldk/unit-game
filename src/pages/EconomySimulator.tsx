@@ -1225,6 +1225,7 @@ export default function EconomySimulator() {
   const fireworksInstance = useRef<any>(null);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1462,7 +1463,8 @@ export default function EconomySimulator() {
 
   // Обновляем функцию handleNicknameSubmit для использования API
   async function handleNicknameSubmit(nickname: string) {
-    if (!pendingVictoryMetrics) return;
+    if (!pendingVictoryMetrics || isSubmitting) return;
+    setIsSubmitting(true);
 
     const newEntry = {
       nickname,
@@ -1495,6 +1497,7 @@ export default function EconomySimulator() {
 
     setShowNicknameModal(false);
     setShowLeaderboardModal(true);
+    setIsSubmitting(false);
   }
 
   // Показывать мобильное предупреждение только при первом запуске, если мобильное устройство
@@ -2316,11 +2319,16 @@ export default function EconomySimulator() {
                 borderRadius: 8,
                 fontSize: 16,
                 fontWeight: 600,
-                cursor: 'pointer',
-                marginBottom: 0
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                marginBottom: 0,
+                opacity: isSubmitting ? 0.7 : 1
               }}
-              onClick={() => handleNicknameSubmit(nickname || 'Игрок')}
-              disabled={!nickname.trim()}
+              onClick={() => {
+                if (!isSubmitting && nickname.trim()) {
+                  handleNicknameSubmit(nickname || 'Игрок');
+                }
+              }}
+              disabled={!nickname.trim() || isSubmitting}
             >
               Сохранить
             </button>
