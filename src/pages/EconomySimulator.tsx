@@ -2289,7 +2289,10 @@ export default function EconomySimulator() {
               Поздравляем!
             </h2>
             <p style={{ fontSize: '16px', marginBottom: '16px', color: '#1d1d1f' }}>
-              Ваш результат попал в ТОП-10 игроков и занял <b>{currentPosition}-е место</b>!
+              Ваш результат попал в ТОП-10 игроков
+              {typeof currentPosition === 'number' && currentPosition > 0
+                ? <> и занял <b>{currentPosition}-е место</b>!</>
+                : '!'}
             </p>
             <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>Введите ваш никнейм:</p>
             <input
