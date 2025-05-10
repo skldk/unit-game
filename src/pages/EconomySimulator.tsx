@@ -1224,6 +1224,7 @@ export default function EconomySimulator() {
   const fireworksRef = useRef<HTMLDivElement | null>(null);
   const fireworksInstance = useRef<any>(null);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1494,6 +1495,23 @@ export default function EconomySimulator() {
 
     setShowNicknameModal(false);
     setShowLeaderboardModal(true);
+  }
+
+  // Показывать мобильное предупреждение только при первом запуске, если мобильное устройство
+  useEffect(() => {
+    if (showOnboarding) {
+      const isMobile = window.innerWidth <= 600;
+      if (isMobile) {
+        setShowMobileWarning(true);
+      }
+    }
+  }, [showOnboarding]);
+
+  if (showMobileWarning) {
+    return <MobileWarningModal onAcknowledge={() => {
+      setShowMobileWarning(false);
+      setShowHintsPreference(true);
+    }} />;
   }
 
   if (showOnboarding) {
@@ -2539,3 +2557,72 @@ mobileStyle.textContent += `
   }
 }
 `;
+
+// Добавить новый компонент для мобильного предупреждения
+function MobileWarningModal({ onAcknowledge }: { onAcknowledge: () => void }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setShow(true), 100);
+  }, []);
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '32px',
+        borderRadius: '24px',
+        maxWidth: '400px',
+        width: '90%',
+        textAlign: 'center',
+        transform: show ? 'scale(1)' : 'scale(0.9)',
+        opacity: show ? 1 : 0,
+        transition: 'all 0.5s ease-out',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱</div>
+        <h2 style={{
+          fontSize: '22px',
+          marginBottom: '16px',
+          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 700
+        }}>
+          Внимание!
+        </h2>
+        <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
+          Игра <b>не адаптирована для мобильной вёрстки</b>.<br />
+          Рекомендуем открыть её на компьютере, планшете или повернуть телефон горизонтально для лучшего опыта.
+        </p>
+        <button
+          onClick={() => {
+            setShow(false);
+            setTimeout(onAcknowledge, 300);
+          }}
+          style={{
+            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            width: '100%'
+          }}
+        >
+          Хорошо
+        </button>
+      </div>
+    </div>
+  );
+}
