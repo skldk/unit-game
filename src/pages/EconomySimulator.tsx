@@ -1227,6 +1227,7 @@ export default function EconomySimulator() {
   const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backToDepartmentsUsed, setBackToDepartmentsUsed] = useState(false);
+  const [refreshInitiativesUsed, setRefreshInitiativesUsed] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1399,6 +1400,7 @@ export default function EconomySimulator() {
     setProfitNetHistory([getInitialMetrics().ProfitNet]);
     setPrevMetrics(null);
     setBackToDepartmentsUsed(false); // сбросить кнопку назад
+    setRefreshInitiativesUsed(false); // сбросить кнопку рефреш
   }
 
   useEffect(() => {
@@ -1517,6 +1519,16 @@ export default function EconomySimulator() {
     setCurrentInitiatives([]);
     setInitiativeChances([]);
     setBackToDepartmentsUsed(true);
+  }
+
+  function handleRefreshInitiatives() {
+    if (!department) return;
+    const allInitiatives = INITIATIVES[department];
+    const selectedInitiatives = getRandomInitiatives(allInitiatives, 3);
+    setCurrentInitiatives(selectedInitiatives);
+    const chances = selectedInitiatives.map(() => 0.2 + Math.random() * 0.7);
+    setInitiativeChances(chances);
+    setRefreshInitiativesUsed(true);
   }
 
   if (showMobileWarning) {
@@ -2077,6 +2089,25 @@ export default function EconomySimulator() {
                   gap: 8,
                   zIndex: 2
                 }}>
+                  <button
+                    onClick={handleRefreshInitiatives}
+                    disabled={refreshInitiativesUsed}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 5,
+                      border: 'none',
+                      background: refreshInitiativesUsed ? 'linear-gradient(90deg, #e5e7eb, #d1d5db)' : 'linear-gradient(90deg, #10b981, #06b6d4)',
+                      color: refreshInitiativesUsed ? '#9ca3af' : 'white',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: refreshInitiativesUsed ? 'not-allowed' : 'pointer',
+                      boxShadow: refreshInitiativesUsed ? 'none' : '0 2px 8px rgba(16,185,129,0.08)',
+                      transition: 'all 0.2s',
+                      minWidth: 48
+                    }}
+                  >
+                    🔄 Ещё
+                  </button>
                   <button
                     onClick={handleBackToDepartments}
                     disabled={backToDepartmentsUsed}
