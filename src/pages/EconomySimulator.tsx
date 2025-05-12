@@ -1228,6 +1228,8 @@ export default function EconomySimulator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backToDepartmentsUsed, setBackToDepartmentsUsed] = useState(false);
   const [refreshInitiativesUsed, setRefreshInitiativesUsed] = useState(false);
+  const [setAllChancesUsed, setSetAllChancesUsed] = useState(false);
+  const [allChancesAre100, setAllChancesAre100] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1283,39 +1285,37 @@ export default function EconomySimulator() {
     setPrevMetrics(metrics);
     const ini = currentInitiatives[idx];
     const chance = initiativeChances[idx] ?? ini.successChance;
-    const rand = Math.random();
-    if (rand < chance) {
-      // Полный успех
-      // ----- РАЗОБРАТЬСЯ С РИСКАМИ -----
+    if (allChancesAre100) {
+      // Всегда максимальный эффект
       m = ini.apply(m);
-     // if (ini.risk && Math.random() < ini.risk.chance) {
-     //   m = ini.risk.effect(m);
-     //   setMessage(ini.risk.message);
-     // } else {
-        setMessage(ini.description + ` (Успех, инициатива реализована)`); // оо
-      //  }
-      // ----- РАЗОБРАТЬСЯ С РИСКАМИ -----
-
-    } else if (rand < chance + (1 - chance)) {
-      // Проверка на полный ноль (ничего не происходит)
-      if (Math.random() < (1 - chance)) { // надо ли запускать второй рандом?
-        setMessage('Инициатива не сработала.');
-      } else {
-        // Частичный эффект: эффект умножается на вероятность
-        if (ini.partialEffect) {
-          m = ini.partialEffect(m);
-          setMessage('Инициатива частично реализована.');
+      setMessage(ini.description + ` (100% успех)`);
+    } else {
+      const rand = Math.random();
+      if (rand < chance) {
+        // Полный успех
+        m = ini.apply(m);
+        setMessage(ini.description + ` (Успех, инициатива реализована)`);
+      } else if (rand < chance + (1 - chance)) {
+        // Проверка на полный ноль (ничего не происходит)
+        if (Math.random() < (1 - chance)) {
+          setMessage('Инициатива не сработала.');
         } else {
-          // Если partialEffect не задан, применяем apply с масштабированием эффекта
-          const mFull = ini.apply(metrics);
-          const mPartial: Metrics = { ...metrics };
-          (Object.keys(mFull) as (keyof Metrics)[]).forEach(key => {
-            if (typeof mFull[key] === 'number' && typeof metrics[key] === 'number') {
-              mPartial[key] = (metrics[key] as number) + ((mFull[key] as number) - (metrics[key] as number)) * chance;
-            }
-          });
-          m = recalcMetrics(mPartial);
-          setMessage('Инициатива частично реализована.');
+          // Частичный эффект: эффект умножается на вероятность
+          if (ini.partialEffect) {
+            m = ini.partialEffect(m);
+            setMessage('Инициатива частично реализована.');
+          } else {
+            // Если partialEffect не задан, применяем apply с масштабированием эффекта
+            const mFull = ini.apply(metrics);
+            const mPartial: Metrics = { ...metrics };
+            (Object.keys(mFull) as (keyof Metrics)[]).forEach(key => {
+              if (typeof mFull[key] === 'number' && typeof metrics[key] === 'number') {
+                mPartial[key] = (metrics[key] as number) + ((mFull[key] as number) - (metrics[key] as number)) * chance;
+              }
+            });
+            m = recalcMetrics(mPartial);
+            setMessage('Инициатива частично реализована.');
+          }
         }
       }
     }
@@ -1401,6 +1401,8 @@ export default function EconomySimulator() {
     setPrevMetrics(null);
     setBackToDepartmentsUsed(false); // сбросить кнопку назад
     setRefreshInitiativesUsed(false); // сбросить кнопку рефреш
+    setSetAllChancesUsed(false); // сбросить кнопку 100%
+    setAllChancesAre100(false); // сбросить 100%
   }
 
   useEffect(() => {
@@ -1519,6 +1521,7 @@ export default function EconomySimulator() {
     setCurrentInitiatives([]);
     setInitiativeChances([]);
     setBackToDepartmentsUsed(true);
+    setAllChancesAre100(false); // сбросить 100% при выходе
   }
 
   function handleRefreshInitiatives() {
@@ -1529,6 +1532,14 @@ export default function EconomySimulator() {
     const chances = selectedInitiatives.map(() => 0.2 + Math.random() * 0.7);
     setInitiativeChances(chances);
     setRefreshInitiativesUsed(true);
+    setAllChancesAre100(false); // сбросить 100% при рефреше
+  }
+
+  function handleSetAllChances100() {
+    if (setAllChancesUsed) return;
+    setInitiativeChances(currentInitiatives.map(() => 1));
+    setAllChancesAre100(true);
+    setSetAllChancesUsed(true);
   }
 
   if (showMobileWarning) {
@@ -2107,6 +2118,25 @@ export default function EconomySimulator() {
                     }}
                   >
                     🔄 Ещё
+                  </button>
+                  <button
+                    onClick={handleSetAllChances100}
+                    disabled={setAllChancesUsed}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 5,
+                      border: 'none',
+                      background: setAllChancesUsed ? 'linear-gradient(90deg, #e5e7eb, #d1d5db)' : 'linear-gradient(90deg, #f59e42, #fbbf24)',
+                      color: setAllChancesUsed ? '#9ca3af' : 'white',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: setAllChancesUsed ? 'not-allowed' : 'pointer',
+                      boxShadow: setAllChancesUsed ? 'none' : '0 2px 8px rgba(251,191,36,0.08)',
+                      transition: 'all 0.2s',
+                      minWidth: 48
+                    }}
+                  >
+                    100%
                   </button>
                   <button
                     onClick={handleBackToDepartments}
