@@ -1226,6 +1226,7 @@ export default function EconomySimulator() {
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backToDepartmentsUsed, setBackToDepartmentsUsed] = useState(false);
 
   useEffect(() => {
     if (turn === 1) {
@@ -1397,6 +1398,7 @@ export default function EconomySimulator() {
     setUsersBelow100(0);
     setProfitNetHistory([getInitialMetrics().ProfitNet]);
     setPrevMetrics(null);
+    setBackToDepartmentsUsed(false); // сбросить кнопку назад
   }
 
   useEffect(() => {
@@ -1509,6 +1511,13 @@ export default function EconomySimulator() {
       }
     }
   }, [showOnboarding]);
+
+  function handleBackToDepartments() {
+    setDepartment(null);
+    setCurrentInitiatives([]);
+    setInitiativeChances([]);
+    setBackToDepartmentsUsed(true);
+  }
 
   if (showMobileWarning) {
     return <MobileWarningModal onAcknowledge={() => {
@@ -2056,8 +2065,39 @@ export default function EconomySimulator() {
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(0,0,0,0.08)',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.04)'
+                boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+                position: 'relative'
               }}>
+                {/* Кнопки-помощники */}
+                <div style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  display: 'flex',
+                  gap: 8,
+                  zIndex: 2
+                }}>
+                  <button
+                    onClick={handleBackToDepartments}
+                    disabled={backToDepartmentsUsed}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: backToDepartmentsUsed ? 'linear-gradient(90deg, #e5e7eb, #d1d5db)' : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                      color: backToDepartmentsUsed ? '#9ca3af' : 'white',
+                      fontWeight: 600,
+                      fontSize: 15,
+                      cursor: backToDepartmentsUsed ? 'not-allowed' : 'pointer',
+                      boxShadow: backToDepartmentsUsed ? 'none' : '0 2px 8px rgba(139,92,246,0.08)',
+                      transition: 'all 0.2s',
+                      minWidth: 80
+                    }}
+                  >
+                    ← Назад
+                  </button>
+                </div>
+                {/* Остальной код блока инициатив */}
                 <div style={{ 
                   display: 'flex',
                   alignItems: 'center',
