@@ -2081,17 +2081,17 @@ export default function EconomySimulator() {
                     onClick={handleBackToDepartments}
                     disabled={backToDepartmentsUsed}
                     style={{
-                      padding: '8px 16px',
-                      borderRadius: 8,
+                      padding: '4px 10px',
+                      borderRadius: 5,
                       border: 'none',
                       background: backToDepartmentsUsed ? 'linear-gradient(90deg, #e5e7eb, #d1d5db)' : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
                       color: backToDepartmentsUsed ? '#9ca3af' : 'white',
                       fontWeight: 600,
-                      fontSize: 15,
+                      fontSize: 13,
                       cursor: backToDepartmentsUsed ? 'not-allowed' : 'pointer',
                       boxShadow: backToDepartmentsUsed ? 'none' : '0 2px 8px rgba(139,92,246,0.08)',
                       transition: 'all 0.2s',
-                      minWidth: 80
+                      minWidth: 48
                     }}
                   >
                     ← Назад
