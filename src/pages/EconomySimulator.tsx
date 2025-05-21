@@ -2656,11 +2656,11 @@ function MobileWarningModal({ onAcknowledge }: { onAcknowledge: () => void }) {
           WebkitTextFillColor: 'transparent',
           fontWeight: 700
         }}>
-          Внимание!
+          Warning!
         </h2>
         <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
-          Игра <b>не адаптирована для мобильной вёрстки</b>.<br />
-          Рекомендуем открыть её на компьютере, планшете или повернуть телефон горизонтально для лучшего опыта.
+          The game <b>is not optimized for mobile layout</b>.<br />
+          We recommend opening it on a computer, tablet, or rotating your phone horizontally for better experience.
         </p>
         <button
           onClick={() => {
@@ -2678,7 +2678,7 @@ function MobileWarningModal({ onAcknowledge }: { onAcknowledge: () => void }) {
             width: '100%'
           }}
         >
-          Хорошо
+          Got it
         </button>
       </div>
     </div>
