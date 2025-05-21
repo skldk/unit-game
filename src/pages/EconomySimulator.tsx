@@ -37,171 +37,60 @@ type Initiative = {
 type Department = 'acquisition' | 'product' | 'onboarding' | 'admin';
 
 const DEPARTMENTS: { key: Department; label: string; icon: string; desc: string }[] = [
-  /* КАК БЫЛО РАНЬШЕ
-  { key: 'acquisition', label: 'Привлечение', icon: '📈', desc: 'Влияет на: Users, C1, CPUser. Основные задачи: снижение CPUser, повышение релевантности трафика.' },
-  { key: 'product', label: 'Продукт', icon: '🛠️', desc: 'Влияет на: AvPrice, COGS. Основные задачи: увеличение ценности продукта, снижение себестоимости.' },
-  { key: 'onboarding', label: 'Онбординг', icon: '🎓', desc: 'Влияет на: C1. Основные задачи: улучшение конверсии через адаптацию клиентов.' },
-  { key: 'admin', label: 'Админ', icon: '🏢', desc: 'Влияет на: FixCosts. Основные задачи: оптимизация постоянных расходов.' },
-  */
-  { key: 'acquisition', label: 'Привлечение', icon: '📈', desc: 'CPUsers↓ от -4$ до -17$\nUsers↑ от 100 до 10 000' },
-  { key: 'product', label: 'Продукт', icon: '🛠️', desc: 'COGS↓ от -3$ до -10$\nAvPrice↑ от $2 до $30' },
-  { key: 'onboarding', label: 'Онбординг', icon: '🎓', desc: 'C1↑ от 15% до 120%' },
-  { key: 'admin', label: 'Админ', icon: '🏢', desc: 'FixCosts↓ от -900$\nдо -20 000$' },
-  
-  ];
+  { key: 'acquisition', label: 'Acquisition', icon: '📈', desc: 'CPUsers↓ from -4$ to -17$\nUsers↑ from 100 to 10,000' },
+  { key: 'product', label: 'Product', icon: '🛠️', desc: 'COGS↓ from -3$ to -10$\nAvPrice↑ from $2 to $30' },
+  { key: 'onboarding', label: 'Onboarding', icon: '🎓', desc: 'C1↑ from 15% to 120%' },
+  { key: 'admin', label: 'Admin', icon: '🏢', desc: 'FixCosts↓ from -900$\nto -20,000$' },
+];
 
 const INITIATIVES: Record<Department, Initiative[]> = {
-  acquisition: 
-  
-  [
-    
-      // SEO-оптимизация 
-      { title: 'Внедрить нейросетевой генератор SEO-текстов', description: 'Users +100, CPUser -$10', apply: m => recalcMetrics({...m, Users: m.Users + 100, CPUser: Math.max(m.CPUser - 10, 0)}), successChance: 0.7, risk: {chance: 0.25, effect: m => recalcMetrics({...m, C1: m.C1 - 5}), message: 'Переоптимизация → C1 -5%'}}, // падения в ранжировании
-      { title: 'Запуск контент блога', description: 'Users +300, CPUser -$17, FixCost +$2500 ', apply: m => recalcMetrics({...m, Users: m.Users + 300, CPUser: Math.max(m.CPUser - 17, 0), FixCosts: m.FixCosts + 2500}), successChance: 0.7, risk: {chance: 0.7, effect: m => recalcMetrics({...m, C1: m.C1 - 10}), message: 'Много не целевого трафика → C1 -10%'}}, // падения в ранжировании
-  
-      // Брендовые кампании
-      { title: 'Запустить медийную рекламу (PR)', description: 'Users +3000, FixCosts +$25 000', apply: m => recalcMetrics({...m, Users: m.Users + 3000, FixCosts: m.FixCosts + 25000}), successChance: 0.55, risk: {chance: 0.7, effect: m => recalcMetrics({...m, C1: m.C1 - 10}), message: 'Много не целевого трафика → C1 -10%'}}, // падения в ранжировании
-  
-      // Performance-маркетинг
-      { title: 'Небольшое маштибирование работающих компаний', description: 'Users +1 000, CPUser +$2', apply: m => recalcMetrics({...m, Users: m.Users + 500, CPUser: Math.max(m.CPUser + 2, 0)}), successChance: 0.65},
-      { title: 'Закупать больше трафика в контексте', description: 'Users +5 000, CPUser +$3', apply: m => recalcMetrics({...m, Users: m.Users + 1000, CPUser: Math.max(m.CPUser + 3, 0)}), successChance: 0.65},
-      { title: 'Закупать больше трафика по всем каналам', description: 'Users +10 000, CPUser +$6', apply: m => recalcMetrics({...m, Users: m.Users + 3000, CPUser: Math.max(m.CPUser + 6, 0)}), successChance: 0.65},
-  
-      // Оптимизационные инициативы (8 шт.)
-      { title: 'Оптимизировать бюджеты под успешные кампании', description: 'CPUser -$7', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 7, 0)}), successChance: 0.72, risk: {chance: 0.3, effect: m => recalcMetrics({...m, Users: m.Users - 100}), message: 'Оптимизация сократила поток → Users -100'}},
-      { title: 'Настроить автоматизированные стратегии показа', description: 'CPUser -$4, C1 +1%', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 4, 0), C1: m.C1 + 1}), successChance: 0.75, risk: {chance: 0.2, effect: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser + 1, 0)}), message: 'Алгоритмы учатся и пока CPUser увеличилась → CPUser +1$'}},
-      { title: 'Провести аудит, и дать рекомендации агенству', description: 'CPUser -$5', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 5, 0)}), successChance: 0.7},
-      
-      // Рисковые каналы
-      { title: 'Закупить рекламу у блогера-миллионика', description: 'Users +8000, FixCosts +$75 000', apply: m => recalcMetrics({...m, Users: m.Users + 8000, FixCosts: m.FixCosts + 75000}), successChance: 0.4, risk: {chance: 0.2, effect: m => recalcMetrics({...m, C1: m.C1 - 15}), message: 'Фрод → C1 -15%'}},
-  
-      // Гибридные стратегии
-      { title: 'Синхронизировать omnichannel-воронку', description: 'CPUser -$6, Users +200', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 6, 0), Users: m.Users + 200}), successChance: 0.7}
+  acquisition: [
+    { title: 'Implement Neural Network SEO Text Generator', description: 'Users +100, CPUser -$10', apply: m => recalcMetrics({...m, Users: m.Users + 100, CPUser: Math.max(m.CPUser - 10, 0)}), successChance: 0.7, risk: {chance: 0.25, effect: m => recalcMetrics({...m, C1: m.C1 - 5}), message: 'Over-optimization → C1 -5%'}},
+    { title: 'Launch Blog Content Strategy', description: 'Users +300, CPUser -$17, FixCost +$2500 ', apply: m => recalcMetrics({...m, Users: m.Users + 300, CPUser: Math.max(m.CPUser - 17, 0), FixCosts: m.FixCosts + 2500}), successChance: 0.7, risk: {chance: 0.7, effect: m => recalcMetrics({...m, C1: m.C1 - 10}), message: 'Non-targeted traffic → C1 -10%'}},
+    { title: 'Launch Media Advertising (PR)', description: 'Users +3000, FixCosts +$25,000', apply: m => recalcMetrics({...m, Users: m.Users + 3000, FixCosts: m.FixCosts + 25000}), successChance: 0.55, risk: {chance: 0.7, effect: m => recalcMetrics({...m, C1: m.C1 - 10}), message: 'Non-targeted traffic → C1 -10%'}},
+    { title: 'Scale Working Campaigns', description: 'Users +1,000, CPUser +$2', apply: m => recalcMetrics({...m, Users: m.Users + 500, CPUser: Math.max(m.CPUser + 2, 0)}), successChance: 0.65},
+    { title: 'Buy More Contextual Traffic', description: 'Users +5,000, CPUser +$3', apply: m => recalcMetrics({...m, Users: m.Users + 1000, CPUser: Math.max(m.CPUser + 3, 0)}), successChance: 0.65},
+    { title: 'Purchase Traffic Across Channels', description: 'Users +10,000, CPUser +$6', apply: m => recalcMetrics({...m, Users: m.Users + 3000, CPUser: Math.max(m.CPUser + 6, 0)}), successChance: 0.65},
+    { title: 'Optimize Successful Campaign Budgets', description: 'CPUser -$7', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 7, 0)}), successChance: 0.72, risk: {chance: 0.3, effect: m => recalcMetrics({...m, Users: m.Users - 100}), message: 'Optimization reduced traffic → Users -100'}},
+    { title: 'Implement Automated Display Strategies', description: 'CPUser -$4, C1 +1%', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 4, 0), C1: m.C1 + 1}), successChance: 0.75, risk: {chance: 0.2, effect: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser + 1, 0)}), message: 'Learning algorithms → CPUser +1$'}},
+    { title: 'Conduct Agency Audit', description: 'CPUser -$5', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 5, 0)}), successChance: 0.7},
+    { title: 'Purchase Influencer Advertising', description: 'Users +8000, FixCosts +$75,000', apply: m => recalcMetrics({...m, Users: m.Users + 8000, FixCosts: m.FixCosts + 75000}), successChance: 0.4, risk: {chance: 0.2, effect: m => recalcMetrics({...m, C1: m.C1 - 15}), message: 'Fraud → C1 -15%'}},
+    { title: 'Sync Omnichannel Funnel', description: 'CPUser -$6, Users +200', apply: m => recalcMetrics({...m, CPUser: Math.max(m.CPUser - 6, 0), Users: m.Users + 200}), successChance: 0.7}
   ],
-  
- /* [ // больше инициатив на снижение CPUser  // константы не меняются 
-    // здесь онулены риски
-
-    
-    { title: 'Запуск SEO-кампании', description: 'CPUser → 0, Users +500', apply: m => recalcMetrics({ ...m, CPUser: 0, Users: m.Users + Math.floor(500) }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + 0*Math.random() * 200) }), risk: { chance: 0, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(100 + Math.random() * 200) }), message: 'Задержка на 2 хода — Users -100-300.' } },
-    { title: 'Таргетированная реклама', description: 'C1 +10%, Users +300', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10), Users: m.Users + Math.floor(300) }), successChance: 0.8, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(50 + Math.random() * 100) }), risk: { chance: 0, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 3) }), message: 'CPUser +$2-5 (нерелевантный трафик).' } },
-    { title: 'Партнерство с блогером', description: 'Users +600, C1 -5%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(600), C1: m.C1 - Math.floor(5) }), successChance: 0.6, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + Math.random() * 200) }), risk: { chance: 0, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(200 + Math.random() * 300) }), message: 'При низком NPS → Users -200-500.' } },
-    { title: 'A/B тесты лендинга', description: 'C1 +15%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(15) }), successChance: 0.7, risk: { chance: 0, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 4) }), message: 'Провал теста → C1 -4-8%.' } },
-    { title: 'Реферальная программа', description: 'Users +200, COGS +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(200 + Math.random() * 0), COGS: m.COGS + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0, effect: m => m, message: 'Бонусы за рефералов увеличили COGS.' } },
-    { title: 'Контекстная реклама', description: 'Users +500, CPUser +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(500 + Math.random() * 0), CPUser: m.CPUser + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Высокая конкуренция → C1 -4-7%.' } },
-    { title: 'Вебинары для ЦА', description: 'C1 +12%, Users +100, FixCosts +$800', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10 + Math.random() * 4), Users: m.Users + Math.floor(80 + Math.random() * 40), FixCosts: m.FixCosts + Math.floor(600 + Math.random() * 400) }), successChance: 0.7 },
-    { title: 'Покупка лидов', description: 'Users +800, C1 -15%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(600 + Math.random() * 400), C1: m.C1 - Math.floor(12 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 2) }), message: 'Риск спама → CPUser +$2-4.' } },
-    { title: 'Email-маркетинг', description: 'Users +200, C1 +8%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(150 + Math.random() * 100), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Частые рассылки → C1 -4-7%.' } },
-    { title: 'Создание контента', description: 'Users +300 (SEO-трафик)', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(200 + Math.random() * 200) }), successChance: 0.7 },
-  */
-    //{ title: 'Запуск SEO-кампании', description: 'CPUser → 0, Users +500', apply: m => recalcMetrics({ ...m, CPUser: 0, Users: m.Users + Math.floor(300 + Math.random() * 400) }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + Math.random() * 200) }), risk: { chance: 0.25, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(100 + Math.random() * 200) }), message: 'Задержка на 2 хода — Users -100-300.' } },
-    //{ title: 'Таргетированная реклама', description: 'C1 +10%, Users +300', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4), Users: m.Users + Math.floor(200 + Math.random() * 200) }), successChance: 0.8, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(50 + Math.random() * 100) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 3) }), message: 'CPUser +$2-5 (нерелевантный трафик).' } },
-    //{ title: 'Партнерство с блогером', description: 'Users +600, C1 -5%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(400 + Math.random() * 400), C1: m.C1 - Math.floor(3 + Math.random() * 4) }), successChance: 0.6, partialEffect: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(100 + Math.random() * 200) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(200 + Math.random() * 300) }), message: 'При низком NPS → Users -200-500.' } },
-    //{ title: 'A/B тесты лендинга', description: 'C1 +15%', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(12 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 4) }), message: 'Провал теста → C1 -4-8%.' } },
-    //{ title: 'Реферальная программа', description: 'Users +200, COGS +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(150 + Math.random() * 100), COGS: m.COGS + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'Бонусы за рефералов увеличили COGS.' } },
-    //{ title: 'Контекстная реклама', description: 'Users +500, CPUser +$2', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(400 + Math.random() * 200), CPUser: m.CPUser + Math.floor(1 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Высокая конкуренция → C1 -4-7%.' } },
-    //{ title: 'Вебинары для ЦА', description: 'C1 +12%, Users +100, FixCosts +$800', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(10 + Math.random() * 4), Users: m.Users + Math.floor(80 + Math.random() * 40), FixCosts: m.FixCosts + Math.floor(600 + Math.random() * 400) }), successChance: 0.7 },
-    //{ title: 'Покупка лидов', description: 'Users +800, C1 -15%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(600 + Math.random() * 400), C1: m.C1 - Math.floor(12 + Math.random() * 6) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, CPUser: m.CPUser + Math.floor(2 + Math.random() * 2) }), message: 'Риск спама → CPUser +$2-4.' } },
-    //{ title: 'Email-маркетинг', description: 'Users +200, C1 +8%', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(150 + Math.random() * 100), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(4 + Math.random() * 3) }), message: 'Частые рассылки → C1 -4-7%.' } },
-    //{ title: 'Создание контента', description: 'Users +300 (SEO-трафик)', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(200 + Math.random() * 200) }), successChance: 0.7 },
- // ],
-  product: // уменьшить по когсу и цене на 1-3   (еще подумать 20 и 15 сдеалать)
-  [
-    
-      // Новые инициативы по снижению COGS
-      { title: 'Оптимизировать кэширование ответов от ИИ через CDН', description: 'COGS -$7', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 7, 1)}), successChance: 0.65 },
-      { title: 'Объединение нескольких API и сокращение платных запросов', description: 'COGS -$10', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 10, 1), AvPrice: m.AvPrice + 0}), successChance: 0.8 },
-      { title: 'Сжатие данных: Применение алгоритмов Brotli для писем и вложений', description: 'COGS -$4', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 4, 1), C1: Math.min(Math.round(m.C1 * 1.0), 100)}), successChance: 0.75 },
-      { title: 'Автоматизация запросов в поддержку', description: 'COGS -$3', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 3, 1), FixCosts: m.FixCosts + 0}), successChance: 0.6 },
-      { title: 'Переводить старые письма в более дешевые хранилища', description: 'COGS -$5', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 5, 1), FixCosts: m.FixCosts + 0}), successChance: 0.6 },
-  
-      // Остальные инициативы (без изменения COGS)
-      { title: 'Запустить модели склонности к тарифам на некупившую базу', description: 'AvPrice +$5, C1 +18%(отн.)', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 5, C1: Math.min(Math.round(m.C1 * 1.18), 100)}), successChance: 0.67 },
-      { title: 'Расширить фичи в премиум подписке', description: 'C1 +18%(отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.08), 100), COGS: Math.max(m.COGS + 0, 1)}), successChance: 0.63 },
-      { title: 'Оптимизировать тарифы (по сегментам и периодам)', description: 'C1 +8%(отн.), AvPrice +$5', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.08), 100), AvPrice: m.AvPrice + 5}), successChance: 0.7 },
-      { title: 'Улучшить текущий функционал с низким CSI', description: 'AvPrice +$2, C1 +2%(отн.)', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 2, C1: Math.min(Math.round(m.C1 * 1.02), 100)}), successChance: 0.67 },
-      { title: 'Доработать механики, которые усиливают связь с архетипом бренда', description: 'AvPrice +$10, C1 +15%(отн.)', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 10, C1: Math.min(Math.round(m.C1 * 1.15), 100)}), successChance: 0.67 },
-  
-      // Дизрапт инициативы
-      { title: '🔥 Интегрировать криптоплатежи через почту', description: 'AvPrice +$30, Users +1500', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 30, Users: m.Users + 1500}), successChance: 0.75 }
-  
+  product: [
+    { title: 'Optimize CDN Caching for AI Responses', description: 'COGS -$7', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 7, 1)}), successChance: 0.65 },
+    { title: 'Consolidate APIs & Reduce Paid Requests', description: 'COGS -$10', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 10, 1), AvPrice: m.AvPrice + 0}), successChance: 0.8 },
+    { title: 'Implement Brotli Data Compression', description: 'COGS -$4', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 4, 1), C1: Math.min(Math.round(m.C1 * 1.0), 100)}), successChance: 0.75 },
+    { title: 'Automate Support Requests', description: 'COGS -$3', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 3, 1), FixCosts: m.FixCosts + 0}), successChance: 0.6 },
+    { title: 'Migrate Old Emails to Cheap Storage', description: 'COGS -$5', apply: m => recalcMetrics({...m, COGS: Math.max(m.COGS - 5, 1), FixCosts: m.FixCosts + 0}), successChance: 0.6 },
+    { title: 'Implement Tier Propensity Models', description: 'AvPrice +$5, C1 +18%', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 5, C1: Math.min(Math.round(m.C1 * 1.18), 100)}), successChance: 0.67 },
+    { title: 'Expand Premium Subscription Features', description: 'C1 +18%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.08), 100), COGS: Math.max(m.COGS + 0, 1)}), successChance: 0.63 },
+    { title: 'Optimize Tiered Pricing', description: 'C1 +8%, AvPrice +$5', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.08), 100), AvPrice: m.AvPrice + 5}), successChance: 0.7 },
+    { title: 'Improve Low CSI Features', description: 'AvPrice +$2, C1 +2%', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 2, C1: Math.min(Math.round(m.C1 * 1.02), 100)}), successChance: 0.67 },
+    { title: 'Enhance Brand Archetype Mechanics', description: 'AvPrice +$10, C1 +15%', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 10, C1: Math.min(Math.round(m.C1 * 1.15), 100)}), successChance: 0.67 },
+    { title: '🔥 Integrate Crypto Payments via Email', description: 'AvPrice +$30, Users +1500', apply: m => recalcMetrics({...m, AvPrice: m.AvPrice + 30, Users: m.Users + 1500}), successChance: 0.75 }
   ],
-/*
-  [
-    { title: 'Внедрение ИИ-оптимизации', description: 'COGS -$4, AvPrice +$10', apply: m => recalcMetrics({ ...m, COGS: m.COGS - 4, AvPrice: m.AvPrice + 10 }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(1 + Math.random() * 2) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2) }), message: 'Технический сбой → COGS +$2-4.' } },
-    { title: 'Премиум-подписка', description: 'AvPrice +$25, C1 -6%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + 25, C1: m.C1 - 6 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(80 + Math.random() * 40) }), message: 'Низкий NPS → Users -80-120.' } },
-    { title: 'Автоматизация поддержки', description: 'COGS -$3, C1 +5%', apply: m => recalcMetrics({ ...m, COGS: m.COGS - 3, C1: m.C1 + 5 }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -7 (робот не справляется).' } },
-    { title: 'Новая фича "Аналитика"', description: 'AvPrice +$20, C1 +8%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + 20, C1: m.C1 + 8 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(4 + Math.random() * 2) }), message: 'Задержка релиза → COGS +$4-6.' } },
-    { title: 'Партнерство с облачным провайдером', description: 'COGS -$5', apply: m => recalcMetrics({ ...m, COGS: m.COGS - 5 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(150 + Math.random() * 100) }), message: 'Риск зависимости → FixCosts +$150-250.' } },
-    { title: 'Улучшение UI/UX', description: 'C1 +10%, AvPrice +$8', apply: m => recalcMetrics({ ...m, C1: m.C1 + 10, AvPrice: m.AvPrice + 8 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(3 + Math.random() * 3) }), message: 'Ошибки → C1 -3-6%.' } },
-    { title: 'Геймификация сервиса', description: 'COGS +$3, C1 +7%', apply: m => recalcMetrics({ ...m, COGS: m.COGS + 3, C1: m.C1 + 7 }), successChance: 0.7 },
-    { title: 'Снижение тарифов для новых', description: 'Users +400, AvPrice -$8', apply: m => recalcMetrics({ ...m, Users: m.Users + 400, AvPrice: m.AvPrice - 8 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Margin: m.Margin - (0.06 + Math.random() * 0.04) }), message: 'Margin падает на 6-10%.' } },
-    { title: 'Интеграция с умным домом', description: 'AvPrice +$30', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + 30 }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(3 + Math.random() * 2) }), message: 'Технические баги → COGS +$3-5.' } },
-    { title: 'Оптимизация серверов', description: 'COGS -$6', apply: m => recalcMetrics({ ...m, COGS: m.COGS - 6 }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -10.' } },
-],
-
-  
-  [
-    { title: 'Внедрение ИИ-оптимизации', description: 'COGS -$4, AvPrice +$10', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(3 + Math.random() * 2), AvPrice: m.AvPrice + Math.floor(8 + Math.random() * 4) }), successChance: 0.7, partialEffect: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(1 + Math.random() * 2) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2) }), message: 'Технический сбой → COGS +$2-4.' } },
-    { title: 'Премиум-подписка', description: 'AvPrice +$25, C1 -6%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(20 + Math.random() * 10), C1: m.C1 - Math.floor(4 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Users: m.Users - Math.floor(80 + Math.random() * 40) }), message: 'Низкий NPS → Users -80-120.' } },
-    { title: 'Автоматизация поддержки', description: 'COGS -$3, C1 +5%', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(2 + Math.random() * 2), C1: m.C1 + Math.floor(4 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -7 (робот не справляется).' } },
-    { title: 'Новая фича "Аналитика"', description: 'AvPrice +$20, C1 +8%', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(15 + Math.random() * 10), C1: m.C1 + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(4 + Math.random() * 2) }), message: 'Задержка релиза → COGS +$4-6.' } },
-    { title: 'Партнерство с облачным провайдером', description: 'COGS -$5', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(4 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(150 + Math.random() * 100) }), message: 'Риск зависимости → FixCosts +$150-250.' } },
-    { title: 'Улучшение UI/UX', description: 'C1 +10%, AvPrice +$8', apply: m => recalcMetrics({ ...m, C1: m.C1 + Math.floor(8 + Math.random() * 4), AvPrice: m.AvPrice + Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, C1: m.C1 - Math.floor(3 + Math.random() * 3) }), message: 'Ошибки → C1 -3-6%.' } },
-    { title: 'Геймификация сервиса', description: 'COGS +$3, C1 +7%', apply: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(2 + Math.random() * 2), C1: m.C1 + Math.floor(5 + Math.random() * 4) }), successChance: 0.7 },
-    { title: 'Снижение тарифов для новых', description: 'Users +400, AvPrice -$8', apply: m => recalcMetrics({ ...m, Users: m.Users + Math.floor(300 + Math.random() * 200), AvPrice: m.AvPrice - Math.floor(6 + Math.random() * 4) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, Margin: m.Margin - (0.06 + Math.random() * 0.04) }), message: 'Margin падает на 6-10%.' } },
-    { title: 'Интеграция с умным домом', description: 'AvPrice +$30', apply: m => recalcMetrics({ ...m, AvPrice: m.AvPrice + Math.floor(25 + Math.random() * 10) }), successChance: 0.7, risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, COGS: m.COGS + Math.floor(3 + Math.random() * 2) }), message: 'Технические баги → COGS +$3-5.' } },
-    { title: 'Оптимизация серверов', description: 'COGS -$6', apply: m => recalcMetrics({ ...m, COGS: m.COGS - Math.floor(5 + Math.random() * 2) }), successChance: 0.7, risk: { chance: 0.2, effect: m => m, message: 'NPS -10.' } },
-  ],
-
-  */
-  onboarding:  // добавить киллер фичу
-  [
-    // Высокорисковые с макс. эффектом (140%)
-    { title: 'Запустить сегментные сценарии демо', description: 'C1 +35% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.35), 100)}), successChance: 0.62 },
-
-    // Сильные инициативы (100-130%)
-    { title: '🔥 Внедрить адаптивный квиз-онбординг', description: 'C1 +80% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.80), 100)}), successChance: 0.68, risk: { chance: 0.3, effect: m => recalcMetrics({...m, Users: m.Users - 400}), message: 'Слишком длинный квиз → Users -400' } },
-    { title: 'Оптимизировать форму регистрации', description: 'C1 +25% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.25), 100)}), successChance: 0.55 },
-
-    // Средний эффект (80-100%)
-    { title: 'Запустить триггерные подсказки', description: 'C1 +30% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.30), 100)}), successChance: 0.65 },
-    { title: 'Внедрить социальное доказательство', description: 'C1 +60% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.6), 100)}), successChance: 0.68 },
-
-    // Базовые улучшения (50-80%)
-    { title: 'Внедрить прогресс-бар онбординга', description: 'C1 +20% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.20), 100)}), successChance: 0.9 },
-    { title: 'Добавить анимацию Aha-moment', description: 'C1 +40% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.40), 100)}), successChance: 0.55 },
-
-    // Низкий риск/умеренный эффект (30-50%)
-    { title: 'Внедрить "живые" теги функций', description: 'C1 +25% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.25), 100)}), successChance: 0.7 },
-    { title: 'Запустить чат-бота для FAQ', description: 'C1 +15% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.15), 100)}), successChance: 0.72 },
-
-    // Минимальный эффект (20%)
-    { title: '🔥 Внедрить шаблоны для быстрого старта', description: 'C1 +120% (отн.)', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 2.20), 100)}), successChance: 0.8 }
+  onboarding: [
+    { title: 'Launch Segmented Demo Scenarios', description: 'C1 +35%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.35), 100)}), successChance: 0.62 },
+    { title: '🔥 Implement Adaptive Onboarding Quiz', description: 'C1 +80%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.80), 100)}), successChance: 0.68, risk: { chance: 0.3, effect: m => recalcMetrics({...m, Users: m.Users - 400}), message: 'Long quiz → Users -400' } },
+    { title: 'Optimize Registration Form', description: 'C1 +25%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.25), 100)}), successChance: 0.55 },
+    { title: 'Launch Triggered Tooltips', description: 'C1 +30%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.30), 100)}), successChance: 0.65 },
+    { title: 'Add Social Proof Elements', description: 'C1 +60%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.6), 100)}), successChance: 0.68 },
+    { title: 'Implement Onboarding Progress Bar', description: 'C1 +20%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.20), 100)}), successChance: 0.9 },
+    { title: 'Add Aha-Moment Animation', description: 'C1 +40%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.40), 100)}), successChance: 0.55 },
+    { title: 'Implement Live Feature Tags', description: 'C1 +25%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.25), 100)}), successChance: 0.7 },
+    { title: 'Launch FAQ Chat Bot', description: 'C1 +15%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 1.15), 100)}), successChance: 0.72 },
+    { title: '🔥 Add Quick-Start Templates', description: 'C1 +120%', apply: m => recalcMetrics({...m, C1: Math.min(Math.round(m.C1 * 2.20), 100)}), successChance: 0.8 }
   ],
   admin: [
-
-
-   // { title: 'Аутсорсинг бухгалтерии', description: 'FixCosts -$800', apply: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(600 + Math.random() * 400) }), successChance: 0.85, partialEffect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts - Math.floor(200 + Math.random() * 100) }), risk: { chance: 0.2, effect: m => recalcMetrics({ ...m, FixCosts: m.FixCosts + Math.floor(800 + Math.random() * 400) }), message: 'Риск ошибок → Штраф $800-1200.' } },
-    
-   
-    // Максимальный эффект (20000)
-    { title: 'Перейти на аутсорсинг юр. услуг', description: 'FixCosts -$20000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 20000, 1000)}), successChance: 0.3, risk: { chance: 0.4, effect: m => recalcMetrics({...m, COGS: m.COGS + 5000}), message: 'Юридические ошибки → COGS +$5000' }},
-
-    // Высокий эффект (распределение Гаусса)
-    { title: 'Оптимизировать арендные платежи', description: 'FixCosts -$15000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 15000, 1000)}), successChance: 0.55, risk: { chance: 0.35, effect: m => recalcMetrics({...m, Users: m.Users - 500}), message: 'Ухудшение локации → Users -500' }},
-    { title: 'Перевести отделы на удалённый формат', description: 'FixCosts -$11000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 11000, 1000)}), successChance: 0.65, risk: { chance: 0.4, effect: m => recalcMetrics({...m, C1: Math.round(m.C1 * 0.90)}), message: 'Потеря контроля → C1 -10%' }},
-
-    // Средний эффект
-    { title: 'Автоматизировать документооборот', description: 'FixCosts -$7500', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 7500, 1000)}), successChance: 0.75 },
-    { title: 'Провести переговоры о тарифах pay-as-you-go', description: 'FixCosts -$4800', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 4800, 1000)}), successChance: 0.6 },
-
-    // Низкий эффект
-    { title: 'Сократить корпоративные мероприятия', description: 'FixCosts -$3200', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 3200, 1000)}), successChance: 0.7 },
-    { title: 'Пересмотреть контракты биллинга', description: 'FixCosts -$2100', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 2100, 1000)}), successChance: 0.68 },
-
-    // Минимальный эффект (900)
-    { title: 'Оптимизировать софт-лицензии', description: 'FixCosts -$900', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 900, 1000)}), successChance: 0.8 }
+    { title: 'Outsource Legal Services', description: 'FixCosts -$20,000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 20000, 1000)}), successChance: 0.3, risk: {chance: 0.4, effect: m => recalcMetrics({...m, COGS: m.COGS + 5000}), message: 'Legal errors → COGS +$5000' }},
+    { title: 'Optimize Rent Payments', description: 'FixCosts -$15,000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 15000, 1000)}), successChance: 0.55, risk: {chance: 0.35, effect: m => recalcMetrics({...m, Users: m.Users - 500}), message: 'Location downgrade → Users -500' }},
+    { title: 'Switch to Remote Work', description: 'FixCosts -$11,000', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 11000, 1000)}), successChance: 0.65, risk: {chance: 0.4, effect: m => recalcMetrics({...m, C1: Math.round(m.C1 * 0.90)}), message: 'Loss of control → C1 -10%' }},
+    { title: 'Automate Document Flow', description: 'FixCosts -$7,500', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 7500, 1000)}), successChance: 0.75 },
+    { title: 'Negotiate Pay-As-You-Go Rates', description: 'FixCosts -$4,800', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 4800, 1000)}), successChance: 0.6 },
+    { title: 'Reduce Corporate Events', description: 'FixCosts -$3,200', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 3200, 1000)}), successChance: 0.7 },
+    { title: 'Review Billing Contracts', description: 'FixCosts -$2,100', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 2100, 1000)}), successChance: 0.68 },
+    { title: 'Optimize Software Licenses', description: 'FixCosts -$900', apply: m => recalcMetrics({...m, FixCosts: Math.max(m.FixCosts - 900, 1000)}), successChance: 0.8 }
   ],
 };
 
@@ -209,7 +98,7 @@ function recalcMetrics(m: Metrics): Metrics {
   const Margin = (m.AvPrice - m.COGS) / m.AvPrice;
   const AMPPU = m.AvPrice - m.COGS;
   const AMPU = AMPPU * (m.C1 / 100);
-  const Profit = (AMPU - m.CPUser) * m.Users;  // Изменено: теперь учитываем CPUser в расчете прибыли
+  const Profit = (AMPU - m.CPUser) * m.Users;
   const ProfitNet = Profit - m.FixCosts;
   return { ...m, Margin, AMPPU, AMPU, Profit, ProfitNet };
 }
@@ -221,84 +110,84 @@ type OnboardingStep = {
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: "InboxMind: Революция рабочих коммуникаций",
+    title: "InboxMind: Revolution in Work Communications",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p>Вы — CEO стартапа, создающего первый ИИ-почтовый сервис уровня SuperHuman для бизнеса.</p>
-        <p>Ваш продукт — InboxMind — это не клиент для писем, а цифровой секретарь с ИИ, который:</p>
+        <p>You are the CEO of a startup creating the first AI-powered email service at SuperHuman level for businesses.</p>
+        <p>Your product - InboxMind - is not just an email client but a digital secretary with AI that:</p>
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          <li>✉️ <b>Автоматизирует рутину:</b> сортирует письма, генерирует ответы, выделяет срочные задачи</li>
-          <li>🤖 <b>Предугадывает действия:</b> предлагает шаблоны, напоминает о дедлайнах, ищет конфликты</li>
-          <li>💼 <b>Анализирует стиль:</b> адаптирует тон писем под корпоративную культуру</li>
-          <li>🔒 <b>Защищает от ошибок:</b> блокирует письма с опечатками или конфиденциальными данными</li>
+          <li>✉️ <b>Automates routine:</b> sorts emails, generates responses, highlights urgent tasks</li>
+          <li>🤖 <b>Predicts actions:</b> suggests templates, reminds of deadlines, detects conflicts</li>
+          <li>💼 <b>Analyzes style:</b> adapts email tone to corporate culture</li>
+          <li>🔒 <b>Prevents errors:</b> blocks emails with typos or confidential data</li>
         </ul>
-        <p style={{ fontStyle: 'italic', marginTop: 16 }}>Но InboxMind пока лишь черновик будущего. Ваш стартап балансирует на грани провала...</p>
+        <p style={{ fontStyle: 'italic', marginTop: 16 }}>But InboxMind is just a draft of the future. Your startup is teetering on the brink of failure...</p>
       </div>
     )
   },
   {
-    title: "Проблемы стартапа",
+    title: "Startup Problems",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p style={{ fontWeight: 600, marginBottom: 16 }}>Темные тучи над FutureInbox:</p>
+        <p style={{ fontWeight: 600, marginBottom: 16 }}>Dark clouds over FutureInbox:</p>
         <div style={{ marginBottom: 16 }}>
-          <p style={{ fontWeight: 600, color: '#ef4444' }}>💸 Убытки на клиента:</p>
-          <p>COGS = $15 (серверы ИИ + шифрование) при цене подписки $20</p>
-          <p>ARPU = -$3 (платите за пользователей, а не зарабатываете!)</p>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>💸 Loss per client:</p>
+          <p>COGS = $15 (AI servers + encryption) with subscription price $20</p>
+          <p>ARPU = -$3 (you're paying for users instead of earning!)</p>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <p style={{ fontWeight: 600, color: '#ef4444' }}>📉 Кризис доверия:</p>
-          <p>Всего 500 компаний-клиентов против Outlook и Gmail</p>
-          <p>Сложный интерфейс пугает HR-директоров</p>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>📉 Trust crisis:</p>
+          <p>Only 500 corporate clients vs Outlook and Gmail</p>
+          <p>Complex interface scares HR directors</p>
         </div>
         <div>
-          <p style={{ fontWeight: 600, color: '#ef4444' }}>☠️ Угроза от гигантов:</p>
-          <p>Microsoft тестирует Copilot для Outlook. Через 15 месяцев они задавят рынок...</p>
+          <p style={{ fontWeight: 600, color: '#ef4444' }}>☠️ Giant threat:</p>
+          <p>Microsoft testing Copilot for Outlook. They'll crush the market in 15 months...</p>
         </div>
       </div>
     )
   },
   {
-    title: "Ваша миссия",
+    title: "Your Mission",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p style={{ marginBottom: 16 }}>За 15 месяцев (ходов):</p>
+        <p style={{ marginBottom: 16 }}>Within 15 months (turns):</p>
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          <li style={{ marginBottom: 12 }}>🔥 <b>Исправить экономику:</b> Снизить COGS до $5, поднять цену до $50</li>
-          <li style={{ marginBottom: 12 }}>🚀 <b>Захватить нишу:</b> 5 000 пользователей - must-have для бизнеса</li>
-          <li>💎 <b>Создать легенду:</b> Стать "ChatGPT для деловой переписки"</li>
+          <li style={{ marginBottom: 12 }}>🔥 <b>Fix economics:</b> Reduce COGS to $5, raise price to $50</li>
+          <li style={{ marginBottom: 12 }}>🚀 <b>Capture niche:</b> 5,000 users - must-have for business</li>
+          <li>💎 <b>Create legend:</b> Become "ChatGPT for business correspondence"</li>
         </ul>
         <div style={{ marginTop: 16, padding: 16, background: '#f8fafc', borderRadius: 8 }}>
-          <p style={{ fontWeight: 600, marginBottom: 8 }}>Это не игра — это война:</p>
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>This is not a game — it's war:</p>
           <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li>🎲 Каждые 3 месяца — прорыв или крах: утечки, бунты инвесторов</li>
-            <li>⚡ Баланс между инновациями и выживанием</li>
-            <li>⏳ Гонка со временем против Microsoft</li>
+            <li>🎲 Every 3 months — breakthrough or collapse: leaks, investor revolts</li>
+            <li>⚡ Balance innovation and survival</li>
+            <li>⏳ Race against Microsoft</li>
           </ul>
         </div>
       </div>
     )
   },
   {
-    title: "Стартовые условия",
+    title: "Starting Conditions",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p style={{ fontWeight: 600, marginBottom: 16 }}>Вы начинаете здесь:</p>
+        <p style={{ fontWeight: 600, marginBottom: 16 }}>You start here:</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
           <div>
-            <p>🏢 <b>Офис:</b></p>
-            <p>Коворкинг с арендованными GPU-серверами</p>
+            <p>🏢 <b>Office:</b></p>
+            <p>Co-working space with rented GPU servers</p>
           </div>
           <div>
-            <p>👥 <b>Команда:</b></p>
-            <p>6 разработчиков и нейролингвист</p>
+            <p>👥 <b>Team:</b></p>
+            <p>6 developers and a neurolinguist</p>
           </div>
           <div>
-            <p>💰 <b>Бюджет:</b></p>
-            <p>$30,000 (последний раунд)</p>
+            <p>💰 <b>Budget:</b></p>
+            <p>$30,000 (last funding round)</p>
           </div>
           <div>
-            <p>📊 <b>Метрики:</b></p>
+            <p>📊 <b>Metrics:</b></p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               <li>Users = 200</li>
               <li>AvPrice = $20</li>
@@ -308,34 +197,34 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
           </div>
         </div>
         <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8, marginBottom: 16 }}>
-          <p style={{ fontWeight: 600, color: '#0369a1' }}>🌟 Сценарий успеха:</p>
-          <p>«InboxMind купила Microsoft за $5 млрд. Ваш ИИ стал стандартом в Outlook!»</p>
+          <p style={{ fontWeight: 600, color: '#0369a1' }}>🌟 Success scenario:</p>
+          <p>"Microsoft acquired InboxMind for $5B. Your AI became Outlook's standard!"</p>
         </div>
         <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
-          <p style={{ fontWeight: 600, color: '#dc2626' }}>💀 Сценарий провала:</p>
-          <p>«Ваш код поглотила нейросеть NeuroTech. Case study "Как убить стартап"»</p>
+          <p style={{ fontWeight: 600, color: '#dc2626' }}>💀 Failure scenario:</p>
+          <p>"Your code was absorbed by NeuroTech AI. Case study 'How to Kill a Startup'"</p>
         </div>
       </div>
     )
   },
   {
-    title: "Тактика: как выигрывать через юнит-экономику",
+    title: "Tactics: Win Through Unit Economics",
     content: (
       <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-        <p style={{ marginBottom: 12 }}>В этой игре вы будете развивать навык работы с юнит-экономикой.</p>
+        <p style={{ marginBottom: 12 }}>This game will develop your unit economics skills.</p>
         <ul style={{ listStyle: 'none', padding: 0, marginBottom: 12 }}>
-          <li>• Есть несколько уровней юнитов — их нужно последовательно делать прибыльными.</li>
-          <li>• На старте юнит 1 уровня (ARPPU) прибыльный, юнит 2 уровня (ARPU - CPUser) важно вывести в плюс.</li>
-          <li>• Пока юниты в минусе — каждый новый пользователь приносит убыток.</li>
-          <li>• Для роста юнита 3 уровня (Profit Net) — пользуйтесь подсказками и оптимизируйте расходы.</li>
+          <li>• Multiple unit levels — make them profitable sequentially</li>
+          <li>• First level unit (ARPPU) is profitable, crucial to make 2nd level (ARPU - CPUser) positive</li>
+          <li>• While units are negative — each new user brings loss</li>
+          <li>• For 3rd level growth (Profit Net) — use hints and optimize costs</li>
         </ul>
         <div style={{ background: '#f3f4f6', borderRadius: 8, padding: 12, fontSize: 15, marginTop: 16 }}>
-          <b>Общая тактика:</b> <br />
-          1. Сначала делайте прибыльными юнит 1 и 2 уровня.<br />
-          2. Затем масштабируйте пользователей и оптимизируйте юнит 3 уровня.<br />
-          3. Следите за подсказками — они помогут выйти в плюс!<br />
+          <b>General tactics:</b> <br />
+          1. First make units 1 and 2 profitable<br />
+          2. Then scale users and optimize unit 3<br />
+          3. Follow hints — they'll help reach profitability!<br />
           <div style={{ marginTop: 14, background: '#fffbe6', color: '#b45309', borderRadius: 6, padding: '8px 12px', fontWeight: 600, fontSize: 16, border: '1px solid #fde68a' }}>
-            Ваше первое задание — <span style={{ color: '#d97706' }}>сократить CPUsers до 4$</span>
+            Your first task — <span style={{ color: '#d97706' }}>reduce CPUsers to $4</span>
           </div>
         </div>
       </div>
@@ -384,10 +273,10 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
           WebkitTextFillColor: 'transparent',
           fontWeight: 700
         }}>
-          Победа!
+          Victory!
         </h2>
         <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
-          Вы успешно превратили InboxMind в прибыльную компанию!
+          You've successfully turned InboxMind into a profitable company!
         </p>
         <div style={{ 
           display: 'flex', 
@@ -410,7 +299,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            🚀 Достигнута цель: Profit Net ≥ $50,000
+            🚀 Goal achieved: Profit Net ≥ $50,000
           </div>
           <div style={{ 
             padding: '12px', 
@@ -418,7 +307,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            💎 Компания готова к масштабированию
+            💎 Company ready for scaling
           </div>
           <div style={{ 
             padding: '12px', 
@@ -426,7 +315,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            🏆 Вы стали легендой Кремниевой долины
+            🏆 You became a Silicon Valley legend
           </div>
         </div>
         <button
@@ -442,7 +331,7 @@ function VictoryModal({ onRestart, metrics }: { onRestart: () => void; metrics: 
             width: '100%'
           }}
         >
-          Начать новую игру
+          Start New Game
         </button>
       </div>
     </div>
@@ -482,9 +371,9 @@ function DefeatModal({ onRestart, metrics }: { onRestart: () => void; metrics: M
         boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
       }}>
         <div style={{ fontSize: '64px', marginBottom: '24px' }}>😔</div>
-        <h2 style={{ fontSize: '24px', marginBottom: '16px', color: '#1f2937' }}>Не в этот раз...</h2>
+        <h2 style={{ fontSize: '24px', marginBottom: '16px', color: '#1f2937' }}>Not this time...</h2>
         <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
-          Но вы получили ценный опыт! Теперь вы знаете больше о:
+          But you gained valuable experience! Now you know more about:
         </p>
         <div style={{ 
           display: 'flex', 
@@ -506,7 +395,7 @@ function DefeatModal({ onRestart, metrics }: { onRestart: () => void; metrics: M
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            📈 Управлении метриками продукта
+            📈 Product metric management
           </div>
           <div style={{ 
             padding: '12px', 
@@ -514,7 +403,7 @@ function DefeatModal({ onRestart, metrics }: { onRestart: () => void; metrics: M
             borderRadius: '8px',
             color: '#4b5563'
           }}>
-            🎯 Балансировке рисков и возможностей
+            🎯 Balancing risks and opportunities
           </div>
         </div>
         <button
@@ -530,7 +419,7 @@ function DefeatModal({ onRestart, metrics }: { onRestart: () => void; metrics: M
             width: '100%'
           }}
         >
-          Попробовать еще раз
+          Try Again
         </button>
       </div>
     </div>
@@ -549,75 +438,85 @@ type Achievement = {
 const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_profit',
-    title: 'Первая прибыль',
-    description: 'Достигните положительного Profit Net',
+    title: 'First Profit',
+    description: 'Achieve positive Profit Net',
     icon: '💰',
     condition: (m) => m.ProfitNet > 0
   },
   {
     id: 'users_1000',
-    title: 'Растущее комьюнити',
-    description: 'Достигните 1000 пользователей',
+    title: 'Growing Community',
+    description: 'Reach 1000 users',
     icon: '👥',
     condition: (m) => m.Users >= 1000
   },
   {
     id: 'users_5000',
-    title: 'Популярный продукт',
-    description: 'Достигните 5000 пользователей',
+    title: 'Popular Product',
+    description: 'Reach 5000 users',
     icon: '🌟',
     condition: (m) => m.Users >= 5000
   },
   {
     id: 'margin_50',
-    title: 'Эффективный бизнес',
-    description: 'Достигните маржинальности 50%',
+    title: 'Efficient Business',
+    description: 'Achieve 50% margin',
     icon: '📈',
     condition: (m) => m.Margin >= 0.5
   },
   {
     id: 'profit_10k',
-    title: 'Путь к успеху',
-    description: 'Достигните Profit Net $10,000',
+    title: 'Path to Success',
+    description: 'Achieve $10,000 Profit Net',
     icon: '💎',
     condition: (m) => m.ProfitNet >= 10000
   },
   {
     id: 'profit_25k',
-    title: 'Уверенный рост',
-    description: 'Достигните Profit Net $25,000',
+    title: 'Steady Growth',
+    description: 'Achieve $25,000 Profit Net',
     icon: '🚀',
     condition: (m) => m.ProfitNet >= 25000
   },
   {
     id: 'c1_40',
-    title: 'Мастер конверсии',
-    description: 'Достигните конверсии 40%',
+    title: 'Conversion Master',
+    description: 'Achieve 40% conversion',
     icon: '🎯',
     condition: (m) => m.C1 >= 40
   },
   {
     id: 'low_costs',
-    title: 'Оптимизатор',
-    description: 'Снизьте COGS на 30% от начального значения',
+    title: 'Optimizer',
+    description: 'Reduce COGS by 30% from initial value',
     icon: '✂️',
     condition: (m) => m.COGS <= 10.5 // 30 * 0.7
   },
   {
     id: 'quick_growth',
-    title: 'Быстрый старт',
-    description: 'Достигните 2000 пользователей за первые 5 ходов',
+    title: 'Fast Start',
+    description: 'Reach 2000 users within first 5 turns',
     icon: '⚡',
     condition: (m, _, turn) => m.Users >= 2000 && turn <= 5
   },
   {
     id: 'perfect_balance',
-    title: 'Идеальный баланс',
-    description: 'Достигните положительных значений во всех ключевых метриках',
+    title: 'Perfect Balance',
+    description: 'Achieve positive values in all key metrics',
     icon: '⚖️',
     condition: (m) => m.ProfitNet > 0 && m.AMPU > 0 && m.Margin > 0 && m.C1 > 20
   }
 ];
+
+
+
+
+
+
+
+
+
+
 
 function AchievementNotification({ achievement, onClose }: { achievement: Achievement; onClose: () => void }) {
   const [show, setShow] = useState(false);
@@ -666,7 +565,7 @@ function AchievementNotification({ achievement, onClose }: { achievement: Achiev
           WebkitTextFillColor: 'transparent',
           fontWeight: 700
         }}>
-          Ваше новое достижение!
+          New Achievement Unlocked!
         </h3>
         <div style={{
           padding: '24px',
@@ -712,7 +611,7 @@ function AchievementNotification({ achievement, onClose }: { achievement: Achiev
           onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          Продолжить
+          Continue
         </button>
       </div>
     </div>
@@ -757,7 +656,7 @@ function AchievementsModal({ achievements, onClose }: { achievements: Achievemen
           alignItems: 'center',
           marginBottom: '24px'
         }}>
-          <h2 style={{ margin: 0, fontSize: '24px' }}>Достижения</h2>
+          <h2 style={{ margin: 0, fontSize: '24px' }}>Achievements</h2>
           <button
             onClick={onClose}
             style={{
@@ -810,6 +709,14 @@ function AchievementsModal({ achievements, onClose }: { achievements: Achievemen
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 // Add at the top of the file, after imports
 const styles = {
@@ -917,252 +824,160 @@ function StepNotification({ message, profitChangeMessage, onClose, metrics, bala
     const d3 = (c1*1.2*unit1-(cpUser))*(U)-fixCost;
     const d4 = (c1*unit1-(cpUser))*(U)-(fixCost-250000);
 
+
+
+
+
+
+
+
+    
     if (turn <= 12) {
       if (unit2 < 0 && cpUser > 4) {
-        return 'Обратите внимание на Юнит 2 уровня: CPUser превышает ARPU. Снизте CPUsers до 4$.';
+        return 'Pay attention to Unit 2: CPUser exceeds ARPU. Reduce CPUsers to $4.';
       }
       if (unit2 < 0 && cpUser <= 4) {
-        return 'Юнит 2 уровня требует внимания: давайте вместе выведем его в плюс! Попробуйте сделать CPUsers = 0$';
+        return 'Unit 2 needs attention: lets make it positive together! Try setting CPUsers = $0';
       }
       if (unit1 > 0 && unit2 > 0 && unit3 < 0 && -3 * unit3 > balance && fixCost > 2900) {
-        return 'Оптимизируйте FixCosts: иначе вы скоро потратите все деньги.';
+        return 'Optimize FixCosts: otherwise youll soon run out of money.';
       }
       if (unit1 > 0 && unit2 > 0 && c1 < 40 && -3 * unit3 < balance) {
-        return 'Советуем улучшить первый опыт клиентов: доведите С1 до 40%.';
+        return 'We recommend improving first user experience: increase C1 to 40%.';
       }
       if (unit1 > 0 && unit2 > 0  && c1 > 40 && cogs > 5 && cogs/unit1 > 0.3) {
-        return 'Пора поработать над себестоимостью: попробуйте договориться с поставщиками или оптимизировать производство, чтобы снизить COGS до $5.';
+        return 'Time to work on costs: try negotiating with suppliers or optimize production to reduce COGS to $5.';
       }
       if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs <= 5 && unit1 >= 50) {
-        return 'Отличные показатели! Теперь можете смело масштабироваться — увеличивайте Users до 100000.';
+        return 'Great metrics! Now you can safely scale - increase Users to 100,000.';
       }
       if (unit1 > 0 && unit2 > 0 && unit3 > 0 && c1 > 40 && cogs/unit1 < 0.3 && unit1 < 50) {
-        return 'Советуем повышать ценность продукта: повышайте AvPrice до 100$.';
+        return 'We recommend increasing product value: raise AvPrice to $100.';
       }
-      return 'Каждый ваш выбор влияет на развитие компании. Анализируйте метрики и не бойтесь экспериментировать!';
+      return 'Every choice affects company growth. Analyze metrics and dont be afraid to experiment!';
     }
     
     if (turn > 12) {
       const maxVal = Math.max(d1_1, d1_2, d2, d3, d4);
     
       if (maxVal === d1_1 || maxVal === d1_2) {
-        return 'Финишная прямая! Используйте накопленные знания для масштабного продвижения.';
+        return 'Final stretch! Use accumulated knowledge for large-scale promotion.';
       } 
       if (maxVal === d2) {
-        return 'Последний рывок! Сделайте ставку на улучшение продукта (ARPPU) — добавьте функцию, которую больше всего ждут клиенты.';
+        return 'Last push! Focus on product improvement (ARPPU) - add the most awaited feature.';
       }
       if (maxVal === d3) {
-        return 'Завершающий этап! Уделите внимание онбордингу (C1) — смело оптимизируйте процесс адаптации новых пользователей.';
+        return 'Final stage! Improve onboarding (C1) - optimize new user adaptation process.';
       }
-      return 'Финальный этап! Проверьте операционные расходы (FixCosts) — возможно, есть возможность сократить издержки без потери качества.';
+      return 'Final phase! Check operational costs (FixCosts) - maybe you can reduce expenses without quality loss.';
     }
     
-    return 'Помните: даже небольшие изменения могут дать значительный эффект. Следите за метриками и продолжайте улучшения!';
-  };
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-      opacity: show ? 1 : 0,
-      transition: 'opacity 0.3s ease'
-    }}>
+    return 'Remember: even small changes can have significant impact. Track metrics and keep improving!';
+    };
+    
+    return (
       <div style={{
-        background: 'white',
-        padding: '32px',
-        borderRadius: '24px',
-        maxWidth: '500px',
-        width: '90%',
-        textAlign: 'center',
-        transform: show ? 'scale(1)' : 'scale(0.9)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
         opacity: show ? 1 : 0,
-        transition: 'all 0.5s ease-out',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+        transition: 'opacity 0.3s ease'
       }}>
-        <div style={{ 
-          fontSize: '20px',
-          color: '#1f2937',
-          marginBottom: '16px',
-          fontWeight: 600,
-          lineHeight: 1.4
+        <div style={{
+          background: 'white',
+          padding: '32px',
+          borderRadius: '24px',
+          maxWidth: '500px',
+          width: '90%',
+          textAlign: 'center',
+          transform: show ? 'scale(1)' : 'scale(0.9)',
+          opacity: show ? 1 : 0,
+          transition: 'all 0.5s ease-out',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
         }}>
-          {message}
-        </div>
-        <div style={{ 
-          fontSize: '16px',
-          color: isPositive ? '#34c759' : '#ff3b30',
-          marginBottom: '24px',
-          fontWeight: 500,
-          lineHeight: 1.4
-        }}>
-          {profitChangeMessage}
-        </div>
-        {showHints && (
           <div style={{ 
-            padding: '16px',
-            background: '#f8fafc',
-            borderRadius: '12px',
-            marginBottom: '24px',
-            textAlign: 'left',
-            border: '1px solid rgba(0,0,0,0.08)',
-            position: 'relative',
-            overflow: 'hidden'
+            fontSize: '20px',
+            color: '#1f2937',
+            marginBottom: '16px',
+            fontWeight: 600,
+            lineHeight: 1.4
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '8px',
-              color: '#1d1d1f',
-              fontWeight: 600,
-              fontSize: '15px'
-            }}>
-              <span style={{ fontSize: '18px' }}>💡</span>
-              Подсказка
-            </div>
+            {message}
+          </div>
+          <div style={{ 
+            fontSize: '16px',
+            color: isPositive ? '#34c759' : '#ff3b30',
+            marginBottom: '24px',
+            fontWeight: 500,
+            lineHeight: 1.4
+          }}>
+            {profitChangeMessage}
+          </div>
+          {showHints && (
             <div style={{ 
-              color: '#4b5563',
-              fontSize: '14px',
-              lineHeight: 1.5
-            }}>
-              {getExplanationText(metrics, balance, turn)}
-            </div>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none',
+              padding: '16px',
+              background: '#f8fafc',
+              borderRadius: '12px',
+              marginBottom: '24px',
+              textAlign: 'left',
+              border: '1px solid rgba(0,0,0,0.08)',
+              position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '8px',
+                color: '#1d1d1f',
+                fontWeight: 600,
+                fontSize: '15px'
+              }}>
+                <span style={{ fontSize: '18px' }}>💡</span>
+                Hint
+              </div>
+              <div style={{ 
+                color: '#4b5563',
+                fontSize: '14px',
+                lineHeight: 1.5
+              }}>
+                {getExplanationText(metrics, balance, turn)}
+              </div>
+              <div style={{
                 position: 'absolute',
                 top: 0,
-                left: '-60%',
-                width: '60%',
+                left: 0,
+                width: '100%',
                 height: '100%',
-                background: 'linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
-                filter: 'blur(2px)',
-                animation: 'shimmer-acq 1.2s linear 0s 1',
-                //animationDelay: '7s'
-              }} />
+                pointerEvents: 'none',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-60%',
+                  width: '60%',
+                  height: '100%',
+                  background: 'linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+                  filter: 'blur(2px)',
+                  animation: 'shimmer-acq 1.2s linear 0s 1',
+                }} />
+              </div>
             </div>
-          </div>
-        )}
-        <button
-          onClick={() => {
-            setShow(false);
-            setTimeout(onClose, 300);
-          }}
-          style={{
-            background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            width: '100%',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          Продолжить
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => void }) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => setShow(true), 100);
-  }, []);
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '32px',
-        borderRadius: '24px',
-        maxWidth: '500px',
-        width: '90%',
-        textAlign: 'center',
-        transform: show ? 'scale(1)' : 'scale(0.9)',
-        opacity: show ? 1 : 0,
-        transition: 'all 0.5s ease-out',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-      }}>
-        <div style={{ fontSize: '64px', marginBottom: '24px' }}>💡</div>
-        <h2 style={{ 
-          fontSize: '24px', 
-          marginBottom: '16px',
-          background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontWeight: 700
-        }}>
-          Хотите получать подсказки?
-        </h2>
-        <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
-          После каждого хода вы будете получать советы по улучшению метрик и достижению целей
-        </p>
-        <div style={{ 
-          display: 'flex', 
-          gap: '12px',
-          marginBottom: '24px'
-        }}>
+          )}
           <button
             onClick={() => {
               setShow(false);
-              setTimeout(() => onSelect(false), 300);
+              setTimeout(onClose, 300);
             }}
             style={{
-              flex: 1,
-              background: 'white',
-              color: '#1d1d1f',
-              border: '1px solid rgba(0,0,0,0.1)',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-            onMouseLeave={e => e.currentTarget.style.background = 'white'}
-          >
-            Нет, я профи
-          </button>
-          <button
-            onClick={() => {
-              setShow(false);
-              setTimeout(() => onSelect(true), 300);
-            }}
-            style={{
-              flex: 1,
               background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
               color: 'white',
               border: 'none',
@@ -1170,18 +985,125 @@ function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => 
               borderRadius: '8px',
               fontSize: '16px',
               cursor: 'pointer',
+              width: '100%',
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            Да, хочу
+            Continue
           </button>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+  
+
+
+
+
+  function HintsPreferenceModal({ onSelect }: { onSelect: (showHints: boolean) => void }) {
+    const [show, setShow] = useState(false);
+  
+    useEffect(() => {
+      setTimeout(() => setShow(true), 100);
+    }, []);
+  
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '32px',
+          borderRadius: '24px',
+          maxWidth: '500px',
+          width: '90%',
+          textAlign: 'center',
+          transform: show ? 'scale(1)' : 'scale(0.9)',
+          opacity: show ? 1 : 0,
+          transition: 'all 0.5s ease-out',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '24px' }}>💡</div>
+          <h2 style={{ 
+            fontSize: '24px', 
+            marginBottom: '16px',
+            background: 'linear-gradient(135deg, #000000 0%, #333333 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 700
+          }}>
+            Do you want to receive hints?
+          </h2>
+          <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>
+            After each turn you'll receive advice on improving metrics and achieving goals
+          </p>
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px',
+            marginBottom: '24px'
+          }}>
+            <button
+              onClick={() => {
+                setShow(false);
+                setTimeout(() => onSelect(false), 300);
+              }}
+              style={{
+                flex: 1,
+                background: 'white',
+                color: '#1d1d1f',
+                border: '1px solid rgba(0,0,0,0.1)',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+              onMouseLeave={e => e.currentTarget.style.background = 'white'}
+            >
+              No, I'm a pro
+            </button>
+            <button
+              onClick={() => {
+                setShow(false);
+                setTimeout(() => onSelect(true), 300);
+              }}
+              style={{
+                flex: 1,
+                background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Yes, please
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+
+
 
 // Добавить тип LeaderboardEntry, если его нет
 
@@ -1279,6 +1201,17 @@ export default function EconomySimulator() {
     setInitiativeChances(chances);
   }
 
+
+
+
+
+
+
+
+
+
+
+
   function handleInitiative(idx: number) {
     if (gameOver || department === null) return;
     let m = { ...metrics };
@@ -1286,26 +1219,26 @@ export default function EconomySimulator() {
     const ini = currentInitiatives[idx];
     const chance = initiativeChances[idx] ?? ini.successChance;
     if (allChancesAre100) {
-      // Всегда максимальный эффект
+      // Always maximum effect
       m = ini.apply(m);
-      setMessage(ini.description + ` (100% успех)`);
+      setMessage(ini.description + ` (100% success)`);
     } else {
       const rand = Math.random();
       if (rand < chance) {
-        // Полный успех
+        // Full success
         m = ini.apply(m);
-        setMessage(ini.description + ` (Успех, инициатива реализована)`);
+        setMessage(ini.description + ` (Success, initiative implemented)`);
       } else if (rand < chance + (1 - chance)) {
-        // Проверка на полный ноль (ничего не происходит)
+        // Check for complete failure
         if (Math.random() < (1 - chance)) {
-          setMessage('Инициатива не сработала.');
+          setMessage('Initiative failed.');
         } else {
-          // Частичный эффект: эффект умножается на вероятность
+          // Partial effect: effect multiplied by probability
           if (ini.partialEffect) {
             m = ini.partialEffect(m);
-            setMessage('Инициатива частично реализована.');
+            setMessage('Initiative partially implemented.');
           } else {
-            // Если partialEffect не задан, применяем apply с масштабированием эффекта
+            // If partialEffect not defined, apply scaled effect
             const mFull = ini.apply(metrics);
             const mPartial: Metrics = { ...metrics };
             (Object.keys(mFull) as (keyof Metrics)[]).forEach(key => {
@@ -1314,26 +1247,26 @@ export default function EconomySimulator() {
               }
             });
             m = recalcMetrics(mPartial);
-            setMessage('Инициатива частично реализована.');
+            setMessage('Initiative partially implemented.');
           }
         }
       }
     }
 
-    // Добавляем сообщение об изменении Profit Net
+    // Add Profit Net change message
     const profitNetChange = m.ProfitNet - metrics.ProfitNet;
-    if (Math.abs(profitNetChange) > 0.01) { // Проверяем, что изменение существенное
+    if (Math.abs(profitNetChange) > 0.01) { // Check for significant change
       const changeText = formatNumber(Math.round(Math.abs(profitNetChange)));
       if (profitNetChange > 0) {
-        setProfitChangeMessage(`Profit Net вырос на $${changeText}`);
+        setProfitChangeMessage(`Profit Net increased by $${changeText}`);
       } else {
-        setProfitChangeMessage(`Profit Net снизился на $${changeText}`);
+        setProfitChangeMessage(`Profit Net decreased by $${changeText}`);
       }
     } else {
-      setProfitChangeMessage('Profit Net не изменился');
+      setProfitChangeMessage('Profit Net unchanged');
     }
 
-    // --- Баланс ---
+    // --- Balance ---
     const newBalance = balance + m.ProfitNet;
     setBalance(newBalance);
     // --- Users < 100 ---
@@ -1341,7 +1274,7 @@ export default function EconomySimulator() {
     if (m.Users < 100) {
       newUsersBelow100 += 1;
       if (newUsersBelow100 === 1) {
-        setMessage(prev => (prev ? prev + ' ' : '') + 'Клиентская база сокращается!');
+        setMessage(prev => (prev ? prev + ' ' : '') + 'Client base shrinking!');
       }
     } else {
       newUsersBelow100 = 0;
@@ -1354,31 +1287,42 @@ export default function EconomySimulator() {
     setCurrentInitiatives([]);
     setInitiativeChances([]);
     
-    // --- Победа/Поражение ---
+    // --- Victory/Defeat ---
     if (m.ProfitNet >= 50000 && turn + 1 === 15) {
       setGameOver(true);
       setIsVictory(true);
-      setMessage('Победа! Profit Net ≥ $50,000 к 15-му ходу');
+      setMessage('Victory! Profit Net ≥ $50,000 by turn 15');
       handleVictory(m);
     } else if (newBalance < 0) {
       setGameOver(true);
       setIsVictory(false);
-      setMessage('Поражение! Баланс компании ушёл в минус.');
+      setMessage('Defeat! Company balance went negative.');
     } else if (newUsersBelow100 >= 2) {
       setGameOver(true);
       setIsVictory(false);
-      setMessage('Поражение! Клиентская база < 100 два хода подряд.');
+      setMessage('Defeat! Client base < 100 for two consecutive turns.');
     } else if (turn + 1 > 15) {
       setGameOver(true);
       setIsVictory(false);
-      setMessage('Игра окончена. Не достигнуты условия победы.');
+      setMessage('Game over. Victory conditions not met.');
     }
 
-    // Показываем уведомление о шаге только если игра не окончена
+    // Show turn notification only if game continues
     if (!gameOver) {
       setShowStepNotification(true);
     }
   }
+
+
+
+
+
+
+
+
+
+
+
 
   function handleStartGame() {
     setShowOnboarding(false);
@@ -1595,7 +1539,7 @@ export default function EconomySimulator() {
               }}
               className="hover-button"
             >
-              Назад
+              Back
             </button>
             {onboardingStep < ONBOARDING_STEPS.length - 1 ? (
               <button 
@@ -1607,7 +1551,7 @@ export default function EconomySimulator() {
                 }}
                 className="hover-button-dark"
               >
-                Далее
+                Next
               </button>
             ) : (
               <button 
@@ -1619,7 +1563,7 @@ export default function EconomySimulator() {
                 }}
                 className="hover-button-dark"
               >
-                Начать игру
+                Start Game
               </button>
             )}
           </div>
@@ -1678,6 +1622,8 @@ export default function EconomySimulator() {
             }}>
              InboxMind
             </h2>
+
+            
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => setShowLeaderboardModal(true)}
@@ -1694,7 +1640,7 @@ export default function EconomySimulator() {
                   marginRight: '0'
                 }}
               >
-                🏆 ТОП-10
+                🏆 TOP-10
               </button>
               <button
                 onClick={() => setShowAchievementModal(true)}
@@ -1711,7 +1657,7 @@ export default function EconomySimulator() {
                   marginRight: '0'
                 }}
               >
-                ⭐️ Достижения ({achievements.filter(a => a.achieved).length}/{achievements.length})
+                ⭐️ Achievements ({achievements.filter(a => a.achieved).length}/{achievements.length})
               </button>
               <button
                 onClick={() => setShowTacticsModal(true)}
@@ -1728,7 +1674,7 @@ export default function EconomySimulator() {
                   fontWeight: 500
                 }}
               >
-                📋 Тактика
+                📋 Tactics
               </button>
               <button
                 onClick={() => setShowHints(v => !v)}
@@ -1746,7 +1692,7 @@ export default function EconomySimulator() {
                   fontWeight: 500
                 }}
               >
-                💡 Подсказки
+                💡 Hints
               </button>
             </div>
           </div>
@@ -1769,7 +1715,7 @@ export default function EconomySimulator() {
                 alignItems: 'center',
                 gap: 8
               }}>
-                <span style={{ fontWeight: 500 }}>Ход:</span> 
+                <span style={{ fontWeight: 500 }}>Turn:</span> 
                 <span style={{ 
                   background: '#000', 
                   color: '#fff',
@@ -1794,7 +1740,7 @@ export default function EconomySimulator() {
                   WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(0,0,0,0.1)'
                 }}>
-                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Баланс</div>
+                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}>Balance</div>
                   <div style={{ 
                     fontWeight: 600, 
                   fontSize: 24,
@@ -1814,7 +1760,7 @@ export default function EconomySimulator() {
                   WebkitBackdropFilter: 'blur(20px)',
                   border: '1px solid rgba(0,0,0,0.1)'
                 }}>
-                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}> Цель Profit Net $50 000</div>
+                <div style={{ fontSize: 14, color: '#86868b', marginBottom: 4 }}> Profit Net Target $50,000</div>
                   <div style={{ 
                     fontWeight: 600, 
                   fontSize: 24,
@@ -1856,7 +1802,7 @@ export default function EconomySimulator() {
                       dataKey="turn" 
                       tickCount={16} 
                       stroke="#86868b"
-                      label={{ value: 'Ход', position: 'insideBottom', offset: -5 }} 
+                      label={{ value: 'Turn:', position: 'insideBottom', offset: -5 }} 
                     />
                     <YAxis 
                       tickFormatter={v => `$${v.toLocaleString('ru-RU')}`} 
@@ -1866,7 +1812,7 @@ export default function EconomySimulator() {
                     />
                     <Tooltip 
                       formatter={v => `$${v.toLocaleString('ru-RU')}`} 
-                      labelFormatter={l => `Ход: ${l}`}
+                      labelFormatter={l => `Turn: ${l}`}
                       contentStyle={{
                         background: 'rgba(255,255,255,0.95)',
                         border: '1px solid rgba(0,0,0,0.1)',
@@ -1905,9 +1851,9 @@ export default function EconomySimulator() {
               }}>
                 {[
               // { label: 'Маржинальность', value: `${(Math.round(metrics.Margin * 100)).toFixed(1)}%`, color: metrics.Margin < 0 ? '#ff3b30' : '#1d1d1f' },
-                { label: 'ARPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 1 уровня' },
-                { label: 'ARPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 2 уровня' },
-                { label: 'Profit Net', value: `$${formatNumber(Math.round(metrics.ProfitNet))}`, color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Юнит 3 уровня' }
+                { label: 'ARPPU', value: `$${formatNumber(Math.round(metrics.AMPPU))}`, color: metrics.AMPPU < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Level 1 Unit' },
+                { label: 'ARPU - CPUser', value: `$${(Math.round(metrics.AMPU) - Math.round(metrics.CPUser)).toFixed(2)}`, color: (Math.round(metrics.AMPU) - Math.round(metrics.CPUser)) < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Level 2 Unit' },
+                { label: 'Profit Net', value: `$${formatNumber(Math.round(metrics.ProfitNet))}`, color: metrics.ProfitNet < 0 ? '#ff3b30' : '#1d1d1f', tag: 'Level 3 Unit' }
                 ].map((item, index) => (
                   <div key={index} style={{ 
                     background: 'rgba(255,255,255,0.8)',
@@ -2002,14 +1948,14 @@ export default function EconomySimulator() {
                     fontSize: 15,
                     fontWeight: 500
                   }}>
-                    {turn} ход
+                    {turn} turn
                   </div>
                   <div style={{ 
                     fontWeight: 600, 
                     fontSize: 18,
                     color: '#1d1d1f'
                   }}>
-                    Выберите направление
+                    Select Direction
                   </div>
                   </div>
                   <div className="mobile-horizontal-row" style={{ 
@@ -2117,7 +2063,7 @@ export default function EconomySimulator() {
                       minWidth: 48
                     }}
                   >
-                    🔄 Ещё
+                    🔄 Load More
                   </button>
                   <button
                     onClick={handleSetAllChances100}
@@ -2155,7 +2101,7 @@ export default function EconomySimulator() {
                       minWidth: 48
                     }}
                   >
-                    ← Назад
+                    ← Back
                   </button>
                 </div>
                 {/* Остальной код блока инициатив */}
@@ -2173,7 +2119,7 @@ export default function EconomySimulator() {
                     fontSize: 15,
                     fontWeight: 500
                   }}>
-                    {turn} ход
+                    {turn} turn
                   </div>
                   <div style={{ 
                     fontWeight: 600, 
@@ -2183,7 +2129,7 @@ export default function EconomySimulator() {
                     alignItems: 'center',
                     gap: 8
                   }}>
-                    Выберите инициативу / 
+                    Select Initiative / 
                     <span style={{ fontSize: 20 }}>{DEPARTMENTS.find(d => d.key === department)?.icon}</span>
                     <span style={{ fontSize: 15 }}>{DEPARTMENTS.find(d => d.key === department)?.label}</span>
                   </div>
@@ -2242,7 +2188,7 @@ export default function EconomySimulator() {
                           fontWeight: 500,
                           alignSelf: 'flex-start'
                         }}>
-                          Вероятность успеха: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
+                          Success Probability: {initiativeChances[idx] ? Math.round(initiativeChances[idx] * 100) : Math.round(ini.successChance * 100)}%
                         </div>
                       </button>
                     ))}
@@ -2319,26 +2265,26 @@ export default function EconomySimulator() {
                 color: '#86868b'
               }}
             >✕</button>
-            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>Тактика: как выигрывать через юнит-экономику</h2>
-            {/* Контент из онбординга тактика */}
-            <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-              <p style={{ marginBottom: 12 }}>В этой игре вы будете развивать навык работы с юнит-экономикой.</p>
-              <ul style={{ listStyle: 'none', padding: 0, marginBottom: 12 }}>
-                <li>• Есть несколько уровней юнитов — их нужно последовательно делать прибыльными.</li>
-                <li>• На старте юнит 1 уровня (ARPPU) прибыльный, юнит 2 уровня (ARPU - CPUser) важно вывести в плюс.</li>
-                <li>• Пока юниты в минусе — каждый новый пользователь приносит убыток.</li>
-                <li>• Для роста юнита 3 уровня (Profit Net) — пользуйтесь подсказками и оптимизируйте расходы.</li>
-              </ul>
-              <div style={{ background: '#f3f4f6', borderRadius: 8, padding: 12, fontSize: 15, marginTop: 16 }}>
-                <b>Общая тактика:</b> <br />
-                1. Сначала делайте прибыльными юнит 1 и 2 уровня.<br />
-                2. Затем масштабируйте пользователей и оптимизируйте юнит 3 уровня.<br />
-                3. Следите за подсказками — они помогут выйти в плюс!<br />
-                <div style={{ marginTop: 14, background: '#fffbe6', color: '#b45309', borderRadius: 6, padding: '8px 12px', fontWeight: 600, fontSize: 16, border: '1px solid #fde68a' }}>
-                  Ваше первое задание — <span style={{ color: '#d97706' }}>сократить CPUsers до 4$</span>
-                </div>
-              </div>
-            </div>
+           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>Tactics: How to Win Through Unit Economics</h2>
+{/* Tactics onboarding content */}
+<div style={{ fontSize: 16, lineHeight: 1.6 }}>
+  <p style={{ marginBottom: 12 }}>In this game you'll develop unit economics skills.</p>
+  <ul style={{ listStyle: 'none', padding: 0, marginBottom: 12 }}>
+    <li>• Multiple unit levels — make them profitable sequentially</li>
+    <li>• Level 1 unit (ARPPU) starts profitable, Level 2 unit (ARPU - CPUser) must become positive</li>
+    <li>• While units are negative — each new user brings loss</li>
+    <li>• For Level 3 unit growth (Profit Net) — use hints and optimize costs</li>
+  </ul>
+  <div style={{ background: '#f3f4f6', borderRadius: 8, padding: 12, fontSize: 15, marginTop: 16 }}>
+    <b>General Strategy:</b> <br />
+    1. First make Units 1 and 2 profitable<br />
+    2. Then scale users and optimize Unit 3<br />
+    3. Follow hints — they'll help reach profitability!<br />
+    <div style={{ marginTop: 14, background: '#fffbe6', color: '#b45309', borderRadius: 6, padding: '8px 12px', fontWeight: 600, fontSize: 16, border: '1px solid #fde68a' }}>
+      Your first task — <span style={{ color: '#d97706' }}>reduce CPUsers to $4</span>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       )}
@@ -2387,15 +2333,15 @@ export default function EconomySimulator() {
               WebkitTextFillColor: 'transparent',
               fontWeight: 700
             }}>
-              Поздравляем!
+              Congratulations!
             </h2>
             <p style={{ fontSize: '16px', marginBottom: '16px', color: '#1d1d1f' }}>
-              Ваш результат попал в ТОП-10 игроков
+              Your result made it to TOP-10 players
               {typeof currentPosition === 'number' && currentPosition > 0
-                ? <> и занял <b>{currentPosition}-е место</b>!</>
+                ? <> and secured <b>{currentPosition}th place</b>!</>
                 : '!'}
             </p>
-            <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>Введите ваш никнейм:</p>
+            <p style={{ fontSize: '16px', marginBottom: '24px', color: '#6b7280' }}>Enter your nickname:</p>
             <input
               type="text"
               maxLength={20}
@@ -2411,7 +2357,7 @@ export default function EconomySimulator() {
               }}
               value={nickname}
               onChange={e => setNickname(e.target.value)}
-              placeholder="Ваш никнейм"
+              placeholder="Your nickname"
             />
             <button
               style={{
@@ -2429,12 +2375,12 @@ export default function EconomySimulator() {
               }}
               onClick={() => {
                 if (!isSubmitting && nickname.trim()) {
-                  handleNicknameSubmit(nickname || 'Игрок');
+                  handleNicknameSubmit(nickname || 'Player');
                 }
               }}
               disabled={!nickname.trim() || isSubmitting}
             >
-              Сохранить
+              Save
             </button>
           </div>
         </div>
@@ -2473,10 +2419,10 @@ export default function EconomySimulator() {
               WebkitTextFillColor: 'transparent',
               fontWeight: 700
             }}>
-              Турнирная таблица
+              Leaderboard
             </h2>
             {isLoadingLeaderboard ? (
-              <div style={{ padding: '20px', color: '#666' }}>Загрузка результатов...</div>
+              <div style={{ padding: '20px', color: '#666' }}>Loading results...</div>
             ) : (
               <>
                 <ol style={{
@@ -2521,7 +2467,7 @@ export default function EconomySimulator() {
                   }}
                   onClick={() => setShowLeaderboardModal(false)}
                 >
-                  Закрыть
+                  Close
                 </button>
               </>
             )}
